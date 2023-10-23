@@ -7,6 +7,7 @@ public class AppleSiliconMeasure implements PowerSensor.Measure {
     private double gpu;
     private double ane;
     private int samplesNb;
+    private final long startedAt = System.currentTimeMillis();
 
     public static final String ANE = "ane";
 
@@ -55,5 +56,10 @@ public class AppleSiliconMeasure implements PowerSensor.Measure {
 
     void incrementSamples() {
         samplesNb++;
+    }
+
+    @Override
+    public long measureDuration() {
+        return System.currentTimeMillis() - startedAt;
     }
 }
