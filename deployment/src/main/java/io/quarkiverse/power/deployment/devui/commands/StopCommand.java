@@ -18,7 +18,7 @@ public class StopCommand implements Command {
     @Override
     public CommandResult execute(CommandInvocation commandInvocation) {
         sensor.stop();
-        sensor.outputConsommation(commandInvocation::println);
+        sensor.outputConsumptionSinceStarted(commandInvocation::println);
 
         return CommandResult.SUCCESS;
     }

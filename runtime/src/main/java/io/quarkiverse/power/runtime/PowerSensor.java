@@ -9,7 +9,7 @@ public interface PowerSensor<T extends PowerSensor.Measure> {
 
     T stop();
 
-    void outputConsommation(Writer out);
+    void outputConsumptionSinceStarted(Writer out);
 
     interface Writer {
         void println(String message);
@@ -29,5 +29,7 @@ public interface PowerSensor<T extends PowerSensor.Measure> {
         double total();
 
         int numberOfSamples();
+
+        long measureDuration();
     }
 }

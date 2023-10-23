@@ -131,13 +131,13 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public void outputConsommation(Writer out) {
+    public void outputConsumptionSinceStarted(Writer out) {
         out = out == null ? System.out::println : out;
         out.println("Consumed " + accumulatedPower.total() + " mW");
     }
 
     private void stop(Writer out) {
         stop();
-        outputConsommation(out);
+        outputConsumptionSinceStarted(out);
     }
 }
