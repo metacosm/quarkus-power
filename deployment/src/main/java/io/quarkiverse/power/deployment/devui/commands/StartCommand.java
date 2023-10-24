@@ -28,7 +28,8 @@ public class StartCommand implements Command {
             if (duration > 0) {
                 commandInvocation.println("Measuring power for " + duration + " seconds, every " + frequency + " milliseconds");
             } else {
-                commandInvocation.println("Measuring power until 'stop' is called, every " + frequency + " milliseconds");
+                commandInvocation.println("Measuring power every " + frequency
+                        + " milliseconds. Execute 'power stop' to stop measurements and get the results.");
             }
             sensor.start(duration, frequency, commandInvocation::println);
         } catch (Exception e) {
