@@ -4,14 +4,18 @@
 
 ## Basic usage
 
-NOTE: Currently only works on macOS. 
+NOTE: Currently only works on macOS. The power monitoring is performed using the bundled `powermetrics` tool, which
+requires `sudo` access. For convenience and security, it's recommended you add your user to the `sudoers` file, giving
+it passwordless access to `/usr/bin/powermetrics` (and possibly, only that).
 
 This extension is an experiment to measure and display the power consumption of your application as it runs in Dev mode.
 
 To use the extension:
+
 1. Clone this repository locally
 2. Build the code using `mvn install`
-3. Add the extension to the application which energy consumption you wish to measure. Since the extension is not yet released, you will need to add it manually as a dependency to your application:
+3. Add the extension to the application which energy consumption you wish to measure. Since the extension is not yet
+   released, you will need to add it manually as a dependency to your application:
     ```xml
    <dependency>
      <groupId>io.quarkiverse.power</groupId>
