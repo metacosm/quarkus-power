@@ -8,7 +8,7 @@ import org.aesh.command.invocation.CommandInvocation;
 import io.quarkiverse.power.runtime.MacOSPowermetricsSensor;
 import io.quarkiverse.power.runtime.PowerSensor;
 
-@CommandDefinition(name = "stop", description = "Stops power measurement and outputs accumulated power since measures were started")
+@CommandDefinition(name = "stop", description = "Stops power measurement and outputs accumulated power since measures were started", generateHelp = true)
 @SuppressWarnings("rawtypes")
 public class StopCommand implements Command {
 

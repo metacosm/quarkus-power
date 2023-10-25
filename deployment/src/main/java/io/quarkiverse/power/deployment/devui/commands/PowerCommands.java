@@ -5,7 +5,7 @@ import java.util.List;
 import org.aesh.command.*;
 import org.aesh.command.invocation.CommandInvocation;
 
-@GroupCommandDefinition(name = "power", description = "Power consumption commands")
+@GroupCommandDefinition(name = "power", description = "Power consumption commands", generateHelp = true)
 @SuppressWarnings("rawtypes")
 public class PowerCommands implements GroupCommand {
 
