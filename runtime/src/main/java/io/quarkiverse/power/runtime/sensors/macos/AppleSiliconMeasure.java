@@ -1,4 +1,4 @@
-package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
+package io.quarkiverse.power.runtime.sensors.macos;
 
 import java.util.Optional;
 
@@ -47,7 +47,7 @@ public class AppleSiliconMeasure implements PowerSensor.IncrementableMeasure {
         gpu += v;
     }
 
-    void addANE(double v) {
+    public void addANE(double v) {
         ane += v;
     }
 
