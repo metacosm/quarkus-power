@@ -1,6 +1,8 @@
-package io.quarkiverse.power.runtime;
+package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
 import java.util.Optional;
+
+import io.quarkiverse.power.runtime.PowerSensor;
 
 public class AppleSiliconMeasure implements PowerSensor.Measure {
     private double cpu;

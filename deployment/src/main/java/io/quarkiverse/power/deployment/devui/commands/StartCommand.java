@@ -6,8 +6,8 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
-import io.quarkiverse.power.runtime.MacOSPowermetricsSensor;
 import io.quarkiverse.power.runtime.PowerSensor;
+import io.quarkiverse.power.runtime.sensors.macos.powermetrics.MacOSPowermetricsSensor;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application", generateHelp = true)
 @SuppressWarnings("rawtypes")

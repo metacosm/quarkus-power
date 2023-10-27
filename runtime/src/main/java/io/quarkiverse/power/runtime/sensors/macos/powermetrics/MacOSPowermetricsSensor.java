@@ -1,7 +1,9 @@
-package io.quarkiverse.power.runtime;
+package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
 import java.io.*;
 import java.util.concurrent.*;
+
+import io.quarkiverse.power.runtime.PowerSensor;
 
 public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure> {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();

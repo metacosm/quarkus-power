@@ -1,4 +1,4 @@
-package io.quarkiverse.power.runtime;
+package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
