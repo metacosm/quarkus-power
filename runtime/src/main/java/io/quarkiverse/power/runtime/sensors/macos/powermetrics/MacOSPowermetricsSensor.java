@@ -1,14 +1,21 @@
 package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.util.concurrent.*;
+
+import com.sun.management.OperatingSystemMXBean;
 
 import io.quarkiverse.power.runtime.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 
 public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure> {
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private static final OperatingSystemMXBean osBean;
 
+    static {
+        osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    }
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private Process powermetrics;
     private ScheduledFuture<?> powermetricsSchedule;
 
@@ -16,6 +23,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     private AppleSiliconMeasure accumulatedPower = new AppleSiliconMeasure();
     public static PowerSensor<AppleSiliconMeasure> instance = new MacOSPowermetricsSensor();
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
+    private double accumulatedCPUShareDiff;
 
     private static class ProcessRecord {
         final double cpu;
@@ -72,7 +80,11 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 if (!cpuDone) {
                     // look for line that contains CPU power measure
                     if (line.startsWith("CPU Power")) {
+                        final var processCpuLoad = osBean.getProcessCpuLoad();
+                        final var cpuLoad = osBean.getCpuLoad();
+                        final var jmxCpuShare = (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
                         accumulatedPower.addCPU(extractAttributedMeasure(line, cpuShare));
+                        accumulatedCPUShareDiff += (cpuShare - jmxCpuShare);
                         cpuDone = true;
                     }
                     continue;
@@ -117,7 +129,8 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 executor.schedule(() -> stop(out), duration, TimeUnit.SECONDS);
             }
 
-            powermetricsSchedule = executor.scheduleAtFixedRate(() -> extractPowerMeasure(powermetrics.getInputStream(), pid),
+            powermetricsSchedule = executor.scheduleAtFixedRate(
+                    () -> extractPowerMeasure(powermetrics.getInputStream(), pid),
                     0, frequency,
                     TimeUnit.MILLISECONDS);
         }
@@ -137,7 +150,8 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     public void outputConsumptionSinceStarted(Writer out) {
         out = out == null ? System.out::println : out;
         out.println("Consumed " + accumulatedPower.total() + " mW over " + (accumulatedPower.measureDuration() / 1000)
-                + " seconds");
+                + " seconds (" + accumulatedPower.numberOfSamples() + " samples)");
+        out.println("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
     }
 
     private void stop(Writer out) {
