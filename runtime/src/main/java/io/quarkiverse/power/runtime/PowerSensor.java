@@ -32,4 +32,13 @@ public interface PowerSensor<T extends PowerSensor.Measure> {
 
         long measureDuration();
     }
+
+    interface IncrementableMeasure extends Measure {
+
+        void addCPU(double v);
+
+        void addGPU(double v);
+
+        void incrementSamples();
+    }
 }

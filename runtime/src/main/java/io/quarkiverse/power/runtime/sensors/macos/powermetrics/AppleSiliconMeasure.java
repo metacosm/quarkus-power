@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import io.quarkiverse.power.runtime.PowerSensor;
 
-public class AppleSiliconMeasure implements PowerSensor.Measure {
+public class AppleSiliconMeasure implements PowerSensor.IncrementableMeasure {
     private double cpu;
     private double gpu;
     private double ane;
@@ -39,11 +39,11 @@ public class AppleSiliconMeasure implements PowerSensor.Measure {
         return cpu + gpu + ane;
     }
 
-    void addCPU(double v) {
+    public void addCPU(double v) {
         cpu += v;
     }
 
-    void addGPU(double v) {
+    public void addGPU(double v) {
         gpu += v;
     }
 
@@ -56,7 +56,7 @@ public class AppleSiliconMeasure implements PowerSensor.Measure {
         return samplesNb;
     }
 
-    void incrementSamples() {
+    public void incrementSamples() {
         samplesNb++;
     }
 
