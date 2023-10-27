@@ -50,7 +50,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
         }
     }
 
-     void extractPowerMeasure(InputStream powerMeasureInput) {
+    void extractPowerMeasure(InputStream powerMeasureInput) {
         try {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powerMeasureInput));
@@ -77,7 +77,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
-     }
+    }
 
     private static double extractAttributedMeasure(String line, double attributionRatio) {
         final var powerValue = line.split(":")[1];
