@@ -20,7 +20,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     private ScheduledFuture<?> powermetricsSchedule;
 
     private boolean running;
-    private AppleSiliconMeasure accumulatedPower = new AppleSiliconMeasure();
+    private AppleSiliconMeasure accumulatedPower;
     public static PowerSensor<AppleSiliconMeasure> instance = new MacOSPowermetricsSensor();
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
     private double accumulatedCPUShareDiff;

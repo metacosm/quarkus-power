@@ -6,7 +6,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 
 import io.quarkiverse.power.runtime.PowerSensor;
-import io.quarkiverse.power.runtime.sensors.macos.powermetrics.MacOSPowermetricsSensor;
+import io.quarkiverse.power.runtime.sensors.linux.rapl.IntelRAPLSensor;
 import io.quarkus.deployment.console.QuarkusCommand;
 
 @CommandDefinition(name = "stop", description = "Stops power measurement and outputs accumulated power since measures were started")
@@ -14,7 +14,7 @@ import io.quarkus.deployment.console.QuarkusCommand;
 public class StopCommand extends QuarkusCommand {
 
     //    @Inject
-    PowerSensor sensor = MacOSPowermetricsSensor.instance;
+    PowerSensor sensor = IntelRAPLSensor.instance;
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
