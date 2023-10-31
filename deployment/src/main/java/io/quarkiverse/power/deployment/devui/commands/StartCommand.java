@@ -7,21 +7,22 @@ import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
 import io.quarkiverse.power.runtime.PowerSensor;
-import io.quarkiverse.power.runtime.sensors.linux.rapl.IntelRAPLSensor;
 import io.quarkus.deployment.console.QuarkusCommand;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")
 @SuppressWarnings("rawtypes")
 public class StartCommand extends QuarkusCommand {
-
-    //    @Inject
-    PowerSensor sensor = IntelRAPLSensor.instance;
+    private final PowerSensor<?> sensor;
 
     @Option(name = "stopAfter", shortName = 's', description = "Automatically stop the measures after the specified duration in seconds", defaultValue = "-1")
     private long duration;
 
     @Option(name = "frequency", shortName = 'f', description = "The frequency at which measurements should be taken, in milliseconds", defaultValue = "1000")
     private long frequency;
+
+    public StartCommand(PowerSensor<?> sensor) {
+        this.sensor = sensor;
+    }
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
