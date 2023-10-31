@@ -7,7 +7,7 @@ import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
 import io.quarkiverse.power.runtime.PowerSensor;
-import io.quarkiverse.power.runtime.sensors.macos.powermetrics.MacOSPowermetricsSensor;
+import io.quarkiverse.power.runtime.sensors.linux.rapl.IntelRAPLSensor;
 import io.quarkus.deployment.console.QuarkusCommand;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")
@@ -15,7 +15,7 @@ import io.quarkus.deployment.console.QuarkusCommand;
 public class StartCommand extends QuarkusCommand {
 
     //    @Inject
-    PowerSensor sensor = MacOSPowermetricsSensor.instance;
+    PowerSensor sensor = IntelRAPLSensor.instance;
 
     @Option(name = "stopAfter", shortName = 's', description = "Automatically stop the measures after the specified duration in seconds", defaultValue = "-1")
     private long duration;
