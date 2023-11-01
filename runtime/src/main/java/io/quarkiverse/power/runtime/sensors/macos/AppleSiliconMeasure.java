@@ -2,15 +2,12 @@ package io.quarkiverse.power.runtime.sensors.macos;
 
 import java.util.Optional;
 
-import io.quarkiverse.power.runtime.PowerSensor;
+import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
 
-public class AppleSiliconMeasure implements PowerSensor.IncrementableMeasure {
+public class AppleSiliconMeasure implements IncrementableMeasure {
     private double cpu;
     private double gpu;
     private double ane;
-    private int samplesNb;
-    private final long startedAt = System.currentTimeMillis();
-
     public static final String ANE = "ane";
 
     @Override
@@ -49,19 +46,5 @@ public class AppleSiliconMeasure implements PowerSensor.IncrementableMeasure {
 
     public void addANE(double v) {
         ane += v;
-    }
-
-    @Override
-    public int numberOfSamples() {
-        return samplesNb;
-    }
-
-    public void incrementSamples() {
-        samplesNb++;
-    }
-
-    @Override
-    public long measureDuration() {
-        return System.currentTimeMillis() - startedAt;
     }
 }

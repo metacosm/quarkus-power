@@ -1,4 +1,4 @@
-package io.quarkiverse.power.runtime;
+package io.quarkiverse.power.runtime.sensors;
 
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
@@ -10,6 +10,10 @@ import io.quarkiverse.power.runtime.sensors.macos.powermetrics.MacOSPowermetrics
 public class PowerSensorProducer {
     @Produces
     public PowerSensor<?> sensor() {
+        return determinePowerSensor();
+    }
+
+    public static PowerSensor<? extends IncrementableMeasure> determinePowerSensor() {
         final var originalOSName = System.getProperty("os.name");
         String osName = originalOSName.toLowerCase();
 

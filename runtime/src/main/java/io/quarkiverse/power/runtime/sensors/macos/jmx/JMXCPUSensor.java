@@ -1,59 +1,31 @@
 package io.quarkiverse.power.runtime.sensors.macos.jmx;
 
+import static io.quarkiverse.power.runtime.PowerMeasurer.osBean;
+
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.management.ManagementFactory;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
-import com.sun.management.OperatingSystemMXBean;
-
-import io.quarkiverse.power.runtime.PowerSensor;
+import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
+import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 
+@SuppressWarnings("unused")
 public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
-    private static final OperatingSystemMXBean osBean;
-    static {
-        osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-    }
-
     public static PowerSensor<AppleSiliconMeasure> instance = new JMXCPUSensor();
-
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
     private Process powermetrics;
-    private ScheduledFuture<?> powermetricsSchedule;
-
-    private boolean running;
-    private AppleSiliconMeasure accumulatedPower = new AppleSiliconMeasure();
 
     @Override
-    public void start(long duration, long frequency, Writer out) throws IOException, Exception {
-        if (!running) {
-            final var freq = Long.toString(Math.round(frequency));
-            powermetrics = Runtime.getRuntime().exec("sudo powermetrics --samplers cpu_power -i " + freq);
-
-            accumulatedPower = new AppleSiliconMeasure();
-            running = true;
-
-            if (duration > 0) {
-                executor.schedule(() -> stop(out), duration, TimeUnit.SECONDS);
-            }
-
-            powermetricsSchedule = executor.scheduleAtFixedRate(() -> extractPowerMeasure(powermetrics.getInputStream()),
-                    0, frequency,
-                    TimeUnit.MILLISECONDS);
-        }
+    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency, Writer out)
+            throws Exception {
+        final var freq = Long.toString(Math.round(frequency));
+        powermetrics = Runtime.getRuntime().exec("sudo powermetrics --samplers cpu_power -i " + freq);
+        return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
     }
 
-    void extractPowerMeasure(InputStream powerMeasureInput) {
+    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure, Writer out) {
         try {
             // Should not be closed since it closes the process
-            BufferedReader input = new BufferedReader(new InputStreamReader(powerMeasureInput));
+            BufferedReader input = new BufferedReader(new InputStreamReader(powermetrics.getInputStream()));
             String line;
             while ((line = input.readLine()) != null) {
                 if (line.isEmpty() || line.startsWith("*")) {
@@ -68,12 +40,10 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
                         break;
                     }
                     final var cpuShare = processCpuLoad / cpuLoad;
-                    accumulatedPower.addCPU(extractAttributedMeasure(line, cpuShare));
+                    ongoingMeasure.addCPU(extractAttributedMeasure(line, cpuShare));
                     break;
                 }
             }
-
-            accumulatedPower.incrementSamples();
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
@@ -86,24 +56,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
     }
 
     @Override
-    public AppleSiliconMeasure stop() {
-        if (running) {
-            powermetrics.destroy();
-            powermetricsSchedule.cancel(true);
-        }
-        running = false;
-        return accumulatedPower;
-    }
-
-    @Override
-    public void outputConsumptionSinceStarted(Writer out) {
-        out = out == null ? System.out::println : out;
-        out.println("Consumed " + accumulatedPower.total() + " mW over " + (accumulatedPower.measureDuration() / 1000)
-                + " seconds");
-    }
-
-    private void stop(Writer out) {
-        stop();
-        outputConsumptionSinceStarted(out);
+    public void stop() {
+        powermetrics.destroy();
     }
 }
