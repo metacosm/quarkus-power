@@ -5,14 +5,15 @@ import java.util.List;
 import org.aesh.command.*;
 import org.aesh.command.invocation.CommandInvocation;
 
-import io.quarkiverse.power.runtime.PowerSensor;
+import io.quarkiverse.power.runtime.PowerMeasurer;
+import io.quarkiverse.power.runtime.SensorMeasure;
 
 @GroupCommandDefinition(name = "power", description = "Power consumption commands", generateHelp = true)
 @SuppressWarnings("rawtypes")
 public class PowerCommands implements GroupCommand {
-    private final PowerSensor<?> sensor;
+    private final PowerMeasurer<? extends SensorMeasure> sensor;
 
-    public PowerCommands(PowerSensor<?> sensor) {
+    public PowerCommands(PowerMeasurer<? extends SensorMeasure> sensor) {
         this.sensor = sensor;
     }
 

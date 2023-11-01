@@ -1,26 +1,17 @@
 package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
-import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.util.concurrent.*;
+import static io.quarkiverse.power.runtime.PowerMeasurer.osBean;
 
-import com.sun.management.OperatingSystemMXBean;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import io.quarkiverse.power.runtime.PowerSensor;
+import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
+import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 
 public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure> {
-    private static final OperatingSystemMXBean osBean;
-
-    static {
-        osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-    }
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private Process powermetrics;
-    private ScheduledFuture<?> powermetricsSchedule;
-
-    private boolean running;
-    private AppleSiliconMeasure accumulatedPower;
     public static PowerSensor<AppleSiliconMeasure> instance = new MacOSPowermetricsSensor();
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
     private double accumulatedCPUShareDiff;
@@ -38,11 +29,19 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
         }
     }
 
-    AppleSiliconMeasure extractPowerMeasure(InputStream powerMeasureInput, long pid) {
-        return extractPowerMeasure(powerMeasureInput, " " + pid + " ");
+    @Override
+    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure, Writer out) {
+        extractPowerMeasure(ongoingMeasure, powermetrics.getInputStream(), pid);
     }
 
-    AppleSiliconMeasure extractPowerMeasure(InputStream powerMeasureInput, String paddedPIDAsString) {
+    AppleSiliconMeasure extractPowerMeasure(InputStream powerMeasureInput, long pid) {
+        return extractPowerMeasure(new OngoingPowerMeasure<>(new AppleSiliconMeasure()), powerMeasureInput, " " + pid + " ");
+    }
+
+    AppleSiliconMeasure extractPowerMeasure(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure,
+            InputStream powerMeasureInput,
+            String paddedPIDAsString) {
+        final var accumulatedPower = ongoingMeasure.sensorMeasure();
         try {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powerMeasureInput));
@@ -100,8 +99,6 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                     break;
                 }
             }
-
-            accumulatedPower.incrementSamples();
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
@@ -115,47 +112,20 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public void start(long duration, long frequency, final Writer out) throws Exception {
-        if (!running) {
-            final var freq = Long.toString(Math.round(frequency));
-            powermetrics = Runtime.getRuntime()
-                    .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
-                            + freq);
-
-            accumulatedPower = new AppleSiliconMeasure();
-            running = true;
-
-            if (duration > 0) {
-                executor.schedule(() -> stop(out), duration, TimeUnit.SECONDS);
-            }
-
-            powermetricsSchedule = executor.scheduleAtFixedRate(
-                    () -> extractPowerMeasure(powermetrics.getInputStream(), pid),
-                    0, frequency,
-                    TimeUnit.MILLISECONDS);
-        }
+    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency, final Writer out) throws Exception {
+        final var freq = Long.toString(Math.round(frequency));
+        powermetrics = Runtime.getRuntime()
+                .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
+                        + freq);
+        return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
     }
 
     @Override
-    public AppleSiliconMeasure stop() {
-        if (running) {
-            powermetrics.destroy();
-            powermetricsSchedule.cancel(true);
-        }
-        running = false;
-        return accumulatedPower;
+    public void stop() {
+        powermetrics.destroy();
     }
 
-    @Override
-    public void outputConsumptionSinceStarted(Writer out) {
-        out = out == null ? System.out::println : out;
-        out.println("Consumed " + accumulatedPower.total() + " mW over " + (accumulatedPower.measureDuration() / 1000)
-                + " seconds (" + accumulatedPower.numberOfSamples() + " samples)");
+    public void additionalInfo(Writer out) {
         out.println("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
-    }
-
-    private void stop(Writer out) {
-        stop();
-        outputConsumptionSinceStarted(out);
     }
 }
