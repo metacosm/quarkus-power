@@ -20,7 +20,11 @@ public class StopCommand extends QuarkusCommand {
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
-        sensor.stop(commandInvocation::println);
+        if (sensor.isRunning()) {
+            sensor.stop(commandInvocation::println);
+        } else {
+            commandInvocation.println("Power measurement hasn't started. Execute 'power start' to start it first.");
+        }
 
         return CommandResult.SUCCESS;
     }

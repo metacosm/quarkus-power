@@ -27,13 +27,18 @@ public class StartCommand extends QuarkusCommand {
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
         try {
-            if (duration > 0) {
-                commandInvocation.println("Measuring power for " + duration + " seconds, every " + frequency + " milliseconds");
+            if (!sensor.isRunning()) {
+                if (duration > 0) {
+                    commandInvocation
+                            .println("Measuring power for " + duration + " seconds, every " + frequency + " milliseconds");
+                } else {
+                    commandInvocation.println("Measuring power every " + frequency
+                            + " milliseconds. Execute 'power stop' to stop measurements and get the results.");
+                }
+                sensor.start(duration, frequency, commandInvocation::println);
             } else {
-                commandInvocation.println("Measuring power every " + frequency
-                        + " milliseconds. Execute 'power stop' to stop measurements and get the results.");
+                commandInvocation.println("Power measurement is already ongoing. Execute 'power stop' to stop it now.");
             }
-            sensor.start(duration, frequency, commandInvocation::println);
         } catch (Exception e) {
             commandInvocation.println("Couldn't start power measure: " + e.getMessage());
             return CommandResult.FAILURE;
