@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import io.quarkiverse.power.runtime.PowerMeasure;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
@@ -14,7 +15,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     private Process powermetrics;
     public static PowerSensor<AppleSiliconMeasure> instance = new MacOSPowermetricsSensor();
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
-    private double accumulatedCPUShareDiff;
+    private double accumulatedCPUShareDiff = 0.0;
 
     private static class ProcessRecord {
         final double cpu;
@@ -117,6 +118,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
         powermetrics = Runtime.getRuntime()
                 .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
                         + freq);
+        accumulatedCPUShareDiff = 0.0;
         return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
     }
 
@@ -125,7 +127,8 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
         powermetrics.destroy();
     }
 
-    public void additionalInfo(Writer out) {
+    @Override
+    public void additionalInfo(PowerMeasure<AppleSiliconMeasure> measure, Writer out) {
         out.println("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
     }
 }

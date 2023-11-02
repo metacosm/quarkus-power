@@ -8,10 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.sun.management.OperatingSystemMXBean;
 
-import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
-import io.quarkiverse.power.runtime.sensors.PowerSensor;
-import io.quarkiverse.power.runtime.sensors.PowerSensorProducer;
+import io.quarkiverse.power.runtime.sensors.*;
 
 public class PowerMeasurer<M extends IncrementableMeasure> {
     public static final OperatingSystemMXBean osBean;
@@ -24,6 +21,7 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private ScheduledFuture<?> scheduled;
     private final PowerSensor<M> sensor;
     private OngoingPowerMeasure<M> measure;
+    private StoppedPowerMeasure<M> lastMeasure;
 
     private final static PowerMeasurer<? extends SensorMeasure> instance = new PowerMeasurer<>(
             PowerSensorProducer.determinePowerSensor());
@@ -36,8 +34,12 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         this.sensor = sensor;
     }
 
+    public boolean isRunning() {
+        return measure != null;
+    }
+
     public void start(long duration, long frequency, PowerSensor.Writer out) throws Exception {
-        if (measure == null) {
+        if (!isRunning()) {
             measure = sensor.start(duration, frequency, out);
 
             if (duration > 0) {
@@ -55,23 +57,34 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         measure.incrementSamples();
     }
 
-    public PowerMeasure<M> stop(PowerSensor.Writer out) {
-        if (measure != null) {
+    public void stop(PowerSensor.Writer out) {
+        if (isRunning()) {
             sensor.stop();
             scheduled.cancel(true);
+            outputConsumptionSinceStarted(out);
+            lastMeasure = new StoppedPowerMeasure<>(measure);
+            measure = null;
         }
-        outputConsumptionSinceStarted(out);
-        return measure;
     }
 
     public PowerMeasure<M> current() {
-        return measure;
+        // use the ongoing power measure if it exists
+        if (measure == null) {
+            // or use the last recorded measure if we have one
+            if (lastMeasure != null) {
+                return lastMeasure;
+            } else {
+                throw new IllegalStateException("No power measure found. Please start it first.");
+            }
+        } else {
+            return measure;
+        }
     }
 
     private void outputConsumptionSinceStarted(PowerSensor.Writer out) {
         out = out == null ? System.out::println : out;
         out.println("Consumed " + measure.total() + " mW over " + (measure.duration() / 1000)
                 + " seconds (" + measure.numberOfSamples() + " samples)");
-        sensor.additionalInfo(out);
+        sensor.additionalInfo(measure, out);
     }
 }
