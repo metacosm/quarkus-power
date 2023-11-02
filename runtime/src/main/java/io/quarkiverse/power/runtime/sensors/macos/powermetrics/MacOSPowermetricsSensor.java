@@ -1,19 +1,17 @@
 package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 
-import static io.quarkiverse.power.runtime.PowerMeasurer.osBean;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import io.quarkiverse.power.runtime.PowerMeasure;
+import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 
 public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure> {
     private Process powermetrics;
-    public static PowerSensor<AppleSiliconMeasure> instance = new MacOSPowermetricsSensor();
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
     private double accumulatedCPUShareDiff = 0.0;
 
@@ -80,9 +78,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 if (!cpuDone) {
                     // look for line that contains CPU power measure
                     if (line.startsWith("CPU Power")) {
-                        final var processCpuLoad = osBean.getProcessCpuLoad();
-                        final var cpuLoad = osBean.getCpuLoad();
-                        final var jmxCpuShare = (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
+                        final var jmxCpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
                         accumulatedPower.addCPU(extractAttributedMeasure(line, cpuShare));
                         accumulatedCPUShareDiff += (cpuShare - jmxCpuShare);
                         cpuDone = true;

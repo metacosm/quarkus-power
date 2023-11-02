@@ -18,12 +18,12 @@ public class PowerSensorProducer {
         String osName = originalOSName.toLowerCase();
 
         if (osName.contains("mac os x")) {
-            return MacOSPowermetricsSensor.instance;
+            return new MacOSPowermetricsSensor();
         }
 
         if (!osName.contains("linux")) {
             throw new RuntimeException("Unsupported platform: " + originalOSName);
         }
-        return IntelRAPLSensor.instance;
+        return new IntelRAPLSensor();
     }
 }

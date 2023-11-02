@@ -11,8 +11,7 @@ import com.sun.management.OperatingSystemMXBean;
 import io.quarkiverse.power.runtime.sensors.*;
 
 public class PowerMeasurer<M extends IncrementableMeasure> {
-    public static final OperatingSystemMXBean osBean;
-
+    private static final OperatingSystemMXBean osBean;
     static {
         osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
     }
@@ -32,6 +31,12 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
 
     public PowerMeasurer(PowerSensor<M> sensor) {
         this.sensor = sensor;
+    }
+
+    public double cpuShareOfJVMProcess() {
+        final var processCpuLoad = osBean.getProcessCpuLoad();
+        final var cpuLoad = osBean.getCpuLoad();
+        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
     public boolean isRunning() {

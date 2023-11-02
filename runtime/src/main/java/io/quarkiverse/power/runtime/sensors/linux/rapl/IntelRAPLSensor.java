@@ -5,13 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
+import io.quarkiverse.power.runtime.PowerMeasurer;
+import io.quarkiverse.power.runtime.SensorMeasure;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
-
-    public static final IntelRAPLSensor instance = new IntelRAPLSensor();
     private final List<Path> raplFiles = new ArrayList<>(3);
 
     public IntelRAPLSensor() {
@@ -47,15 +48,24 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
         ongoingMeasure.addCPU(extractPowerMeasure());
     }
 
-    private long extractPowerMeasure() {
-        long energyData = 0;
-        for (final Path raplFile : raplFiles) {
-            try {
-                energyData += Long.parseLong(Files.readString(raplFile).trim());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    private double extractPowerMeasure() {
+        return extractPowerMeasure(raplFiles.stream().map(IntelRAPLSensor::readLongFromFile), PowerMeasurer.instance());
+    }
+
+    private static long readLongFromFile(Path f) {
+        try {
+            return Long.parseLong(Files.readString(f).trim());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return energyData;
+    }
+
+    static double extractPowerMeasure(Stream<Long> measures, PowerMeasurer<? extends SensorMeasure> measurer) {
+        return measures
+                // first compute attributed power based on CPU share for each measure
+                .map(measure -> measure * measurer.cpuShareOfJVMProcess())
+                // then sum
+                .reduce(Double::sum)
+                .orElse(0.0);
     }
 }
