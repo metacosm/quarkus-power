@@ -1,17 +1,15 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
-import io.quarkiverse.power.runtime.SensorMeasure;
-import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-
 import static io.quarkiverse.power.runtime.SensorMeasure.GPU;
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.Test;
+
+import io.quarkiverse.power.runtime.SensorMeasure;
 
 class IntelRAPLMeasureTest {
 
     private static final String CPU = "package-0";
-
 
     @Test
     void updateValue() {

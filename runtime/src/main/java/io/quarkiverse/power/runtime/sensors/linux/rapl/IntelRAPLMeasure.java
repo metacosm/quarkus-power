@@ -1,28 +1,23 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
-import io.quarkiverse.power.runtime.SensorMeasure;
-import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+
+import io.quarkiverse.power.runtime.SensorMeasure;
+import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
 
 public class IntelRAPLMeasure implements IncrementableMeasure {
     private final Map<String, Accumulator> values = new HashMap<>();
 
     static class Accumulator {
-        private double previous;
+        private long previous;
         private double accumulated;
 
         public Accumulator recordNewValue(long currentValue, double durationSinceLastRecord, double share) {
-            accumulateAttributedDeltaOverDuration(currentValue, durationSinceLastRecord, share);
+            accumulated += (currentValue - previous) / durationSinceLastRecord * share;
             previous = currentValue;
             return this;
-        }
-
-        private void accumulateAttributedDeltaOverDuration(long currentValue, double durationSinceLastRecord, double share) {
-            accumulated += (currentValue - previous) / durationSinceLastRecord * share;
         }
 
         public double accumulated() {
@@ -36,7 +31,7 @@ public class IntelRAPLMeasure implements IncrementableMeasure {
     }
 
     void updateValue(String name, long current, double cpuShare, double frequency) {
-        values.compute(name, (n, previous) -> Objects.requireNonNullElseGet(previous, Accumulator::new).recordNewValue(current, frequency, cpuShare));
+        values.computeIfAbsent(name, k -> new Accumulator()).recordNewValue(current, frequency, cpuShare);
     }
 
     @Override
@@ -52,7 +47,7 @@ public class IntelRAPLMeasure implements IncrementableMeasure {
     @Override
     public Optional<Double> byKey(String key) {
         final var v = IncrementableMeasure.super.byKey(key); // first get from default implementation
-        if(v.isEmpty()) {
+        if (v.isEmpty()) {
             // try local keys
             return Optional.ofNullable(values.get(key)).map(value -> value.accumulated() / 1000);
         } else {
