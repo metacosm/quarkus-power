@@ -37,7 +37,6 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         final var processCpuLoad = osBean.getProcessCpuLoad();
         final var cpuLoad = osBean.getCpuLoad();
         double cpuShare = (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
-        System.out.println("cpuShare = " + cpuShare);
         return cpuShare;
     }
 
