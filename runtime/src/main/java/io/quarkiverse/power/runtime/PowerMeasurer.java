@@ -36,7 +36,13 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     public double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
         final var cpuLoad = osBean.getCpuLoad();
-        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
+        double cpuShare = (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
+        System.out.println("cpuShare = " + cpuShare);
+        return cpuShare;
+    }
+
+    PowerSensor<M> sensor() {
+        return sensor;
     }
 
     public boolean isRunning() {
