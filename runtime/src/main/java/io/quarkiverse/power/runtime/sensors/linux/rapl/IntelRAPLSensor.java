@@ -37,7 +37,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
         if (isReadable(raplFile)) {
             // get metric name
             final var nameFile = raplFile.resolveSibling("name");
-            if (isReadable(nameFile)) {
+            if (!isReadable(nameFile)) {
                 throw new IllegalStateException("No name associated with " + raplFileAsString);
             }
 
