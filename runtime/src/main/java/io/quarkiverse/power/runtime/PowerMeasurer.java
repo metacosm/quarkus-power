@@ -14,6 +14,11 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private static final OperatingSystemMXBean osBean;
     static {
         osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        // take two measures to avoid initial zero values
+        osBean.getProcessCpuLoad();
+        osBean.getCpuLoad();
+        osBean.getProcessCpuLoad();
+        osBean.getCpuLoad();
     }
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -36,8 +41,7 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     public double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
         final var cpuLoad = osBean.getCpuLoad();
-        double cpuShare = (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
-        return cpuShare;
+        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
     PowerSensor<M> sensor() {

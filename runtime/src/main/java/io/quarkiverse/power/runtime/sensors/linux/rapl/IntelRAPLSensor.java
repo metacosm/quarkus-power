@@ -1,5 +1,6 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -15,13 +16,13 @@ import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
     private final Map<String, RAPLFile> raplFiles = new HashMap<>();
-    private double frequency;
+    private long frequency;
 
     interface RAPLFile {
         long extractPowerMeasure();
 
         static RAPLFile createFrom(Path file) {
-            return new NaiveRAPLFile(file);
+            return ByteBufferRAPLFile.createFrom(file);
         }
     }
 
@@ -52,8 +53,12 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
             buffer = ByteBuffer.allocate(CAPACITY);
         }
 
-        static RAPLFile createFrom(Path file) throws IOException {
-            return new ByteBufferRAPLFile(new RandomAccessFile(file.toFile(), "r").getChannel());
+        static RAPLFile createFrom(Path file) {
+            try {
+                return new ByteBufferRAPLFile(new RandomAccessFile(file.toFile(), "r").getChannel());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         public long extractPowerMeasure() {
@@ -120,7 +125,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
 
     @Override
     public OngoingPowerMeasure<IntelRAPLMeasure> start(long duration, long frequency, Writer out) throws Exception {
-        this.frequency = (double) frequency / 1000;
+        this.frequency = frequency;
         IntelRAPLMeasure measure = new IntelRAPLMeasure();
         update(measure);
         return new OngoingPowerMeasure<>(measure);

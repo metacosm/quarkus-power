@@ -3,6 +3,7 @@ package io.quarkiverse.power.runtime.sensors.linux.rapl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.quarkiverse.power.runtime.SensorMeasure;
 import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
@@ -11,12 +12,11 @@ public class IntelRAPLMeasure implements IncrementableMeasure {
     private final Map<String, Accumulator> values = new HashMap<>();
 
     static class Accumulator {
-        private long previous;
+        private final AtomicLong previous = new AtomicLong(0);
         private double accumulated;
 
-        public Accumulator recordNewValue(long currentValue, double durationSinceLastRecord, double share) {
-            accumulated += (currentValue - previous) / durationSinceLastRecord * share;
-            previous = currentValue;
+        private Accumulator recordNewValue(long currentValue, double share, long duration) {
+            accumulated += (currentValue - previous.getAndSet(currentValue)) * share / duration;
             return this;
         }
 
@@ -30,8 +30,8 @@ public class IntelRAPLMeasure implements IncrementableMeasure {
         return value == null ? 0.0 : value.accumulated() / 1000;
     }
 
-    void updateValue(String name, long current, double cpuShare, double frequency) {
-        values.computeIfAbsent(name, k -> new Accumulator()).recordNewValue(current, frequency, cpuShare);
+    void updateValue(String name, long current, double cpuShare, long duration) {
+        values.computeIfAbsent(name, k -> new Accumulator()).recordNewValue(current, cpuShare, duration);
     }
 
     @Override
