@@ -1,22 +1,92 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
+    private final Map<String, RAPLFile> raplFiles = new HashMap<>();
+    private long frequency;
 
-    public static final IntelRAPLSensor instance = new IntelRAPLSensor();
-    private final List<Path> raplFiles = new ArrayList<>(3);
+    interface RAPLFile {
+        long extractPowerMeasure();
+
+        static RAPLFile createFrom(Path file) {
+            return ByteBufferRAPLFile.createFrom(file);
+        }
+    }
+
+    private static class NaiveRAPLFile implements RAPLFile {
+        private final Path path;
+
+        private NaiveRAPLFile(Path path) {
+            this.path = path;
+        }
+
+        @Override
+        public long extractPowerMeasure() {
+            try {
+                return Long.parseLong(Files.readString(path).trim());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    static class ByteBufferRAPLFile implements RAPLFile {
+        private static final int CAPACITY = 64;
+        private final ByteBuffer buffer;
+        private final FileChannel channel;
+
+        private ByteBufferRAPLFile(FileChannel channel) {
+            this.channel = channel;
+            buffer = ByteBuffer.allocate(CAPACITY);
+        }
+
+        static RAPLFile createFrom(Path file) {
+            try {
+                return new ByteBufferRAPLFile(new RandomAccessFile(file.toFile(), "r").getChannel());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public long extractPowerMeasure() {
+            try {
+                channel.read(buffer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            long value = 0;
+            // will work even better if we can hard code as a static final const the length, in case won't change or is defined by spec
+            for (int i = 0; i < CAPACITY; i++) {
+                byte digit = buffer.get(i);
+                if (digit >= '0' && digit <= '9') {
+                    value = value * 10 + (digit - '0');
+                } else {
+                    if (digit == '\n') {
+                        return value;
+                    }
+                    // Invalid character; handle accordingly or throw an exception
+                    throw new NumberFormatException("Invalid character in input: '" + Character.toString(digit) + "'");
+                }
+            }
+            return value;
+        }
+    }
 
     public IntelRAPLSensor() {
         // if we total system energy is not available, read package and DRAM if possible
-        // todo: extract more granular information
         // todo: check Intel doc
         if (!checkAvailablity("/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj")) {
             checkAvailablity("/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj");
@@ -30,32 +100,44 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
 
     private boolean checkAvailablity(String raplFileAsString) {
         final var raplFile = Path.of(raplFileAsString);
-        if (Files.exists(raplFile) && Files.isReadable(raplFile)) {
-            raplFiles.add(raplFile);
+        if (isReadable(raplFile)) {
+            // get metric name
+            final var nameFile = raplFile.resolveSibling("name");
+            if (!isReadable(nameFile)) {
+                throw new IllegalStateException("No name associated with " + raplFileAsString);
+            }
+
+            try {
+                final var name = Files.readString(nameFile).trim();
+                raplFiles.put(name, RAPLFile.createFrom(raplFile));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
             return true;
         }
         return false;
     }
 
+    private static boolean isReadable(Path file) {
+        return Files.exists(file) && Files.isReadable(file);
+    }
+
     @Override
     public OngoingPowerMeasure<IntelRAPLMeasure> start(long duration, long frequency, Writer out) throws Exception {
-        return new OngoingPowerMeasure<>(new IntelRAPLMeasure(extractPowerMeasure()));
+        this.frequency = frequency;
+        IntelRAPLMeasure measure = new IntelRAPLMeasure();
+        update(measure);
+        return new OngoingPowerMeasure<>(measure);
+    }
+
+    private void update(IntelRAPLMeasure measure) {
+        double cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
+        raplFiles.forEach((name, buffer) -> measure.updateValue(name, buffer.extractPowerMeasure(), cpuShare, frequency));
     }
 
     @Override
     public void update(OngoingPowerMeasure<IntelRAPLMeasure> ongoingMeasure, Writer out) {
-        ongoingMeasure.addCPU(extractPowerMeasure());
-    }
-
-    private long extractPowerMeasure() {
-        long energyData = 0;
-        for (final Path raplFile : raplFiles) {
-            try {
-                energyData += Long.parseLong(Files.readString(raplFile).trim());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return energyData;
+        update(ongoingMeasure.sensorMeasure());
     }
 }

@@ -32,7 +32,7 @@ running `sudo chmod +r` on these files. Note that this change will only persist 
 To use the extension:
 
 1. Clone this repository locally
-2. Build the code using `mvn install -DskipTests` (tests currently only work on macOS)
+2. Build the code using `mvn install`
 3. Add the extension to the application which energy consumption you wish to measure. Since the extension is not yet
    released, you will need to add it manually as a dependency to your application:
     ```xml

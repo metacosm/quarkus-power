@@ -1,10 +1,9 @@
 package io.quarkiverse.power.runtime.sensors.macos.jmx;
 
-import static io.quarkiverse.power.runtime.PowerMeasurer.osBean;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
@@ -34,12 +33,10 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
 
                 // look for line that contains CPU power measure
                 if (line.startsWith("CPU Power")) {
-                    final var processCpuLoad = osBean.getProcessCpuLoad();
-                    final var cpuLoad = osBean.getCpuLoad();
-                    if (processCpuLoad < 0 || cpuLoad <= 0) {
+                    final var cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
+                    if (cpuShare <= 0) {
                         break;
                     }
-                    final var cpuShare = processCpuLoad / cpuLoad;
                     ongoingMeasure.addCPU(extractAttributedMeasure(line, cpuShare));
                     break;
                 }
