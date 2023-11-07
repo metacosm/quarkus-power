@@ -1,7 +1,6 @@
 package io.quarkiverse.power.deployment.devui.commands;
 
 import org.aesh.command.CommandDefinition;
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 
@@ -19,9 +18,10 @@ public class StopCommand extends QuarkusCommand {
     }
 
     @Override
-    public CommandResult doExecute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+    public CommandResult doExecute(CommandInvocation commandInvocation) {
+        sensor.onError(e -> commandInvocation.println("An error occurred: " + e.getMessage()));
         if (sensor.isRunning()) {
-            sensor.stop(commandInvocation::println);
+            sensor.stop();
         } else {
             commandInvocation.println("Power measurement hasn't started. Execute 'power start' to start it first.");
         }

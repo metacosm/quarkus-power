@@ -14,14 +14,14 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
     private Process powermetrics;
 
     @Override
-    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency, Writer out)
+    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency)
             throws Exception {
         final var freq = Long.toString(Math.round(frequency));
         powermetrics = Runtime.getRuntime().exec("sudo powermetrics --samplers cpu_power -i " + freq);
         return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
     }
 
-    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure, Writer out) {
+    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure) {
         try {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powermetrics.getInputStream()));

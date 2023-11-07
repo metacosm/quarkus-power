@@ -3,6 +3,7 @@ package io.quarkiverse.power.runtime.sensors.macos.powermetrics;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Optional;
 
 import io.quarkiverse.power.runtime.PowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasurer;
@@ -29,7 +30,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure, Writer out) {
+    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure) {
         extractPowerMeasure(ongoingMeasure, powermetrics.getInputStream(), pid);
     }
 
@@ -109,7 +110,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency, final Writer out) throws Exception {
+    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency) throws Exception {
         final var freq = Long.toString(Math.round(frequency));
         powermetrics = Runtime.getRuntime()
                 .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
@@ -124,7 +125,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public void additionalInfo(PowerMeasure<AppleSiliconMeasure> measure, Writer out) {
-        out.println("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
+    public Optional<String> additionalInfo(PowerMeasure<AppleSiliconMeasure> measure) {
+        return Optional.of("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
     }
 }
