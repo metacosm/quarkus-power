@@ -12,6 +12,7 @@ import io.quarkiverse.power.runtime.sensors.*;
 
 public class PowerMeasurer<M extends IncrementableMeasure> {
     private static final OperatingSystemMXBean osBean;
+
     static {
         osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         // take two measures to avoid initial zero values
@@ -26,6 +27,7 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private final PowerSensor<M> sensor;
     private OngoingPowerMeasure<M> measure;
     private StoppedPowerMeasure<M> lastMeasure;
+    private StoppedPowerMeasure<M> baseline;
 
     private final static PowerMeasurer<? extends SensorMeasure> instance = new PowerMeasurer<>(
             PowerSensorProducer.determinePowerSensor());
@@ -52,18 +54,34 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         return measure != null;
     }
 
-    public void start(long duration, long frequency, PowerSensor.Writer out) throws Exception {
-        if (!isRunning()) {
-            measure = sensor.start(duration, frequency, out);
+    public void start(long durationInSeconds, long frequencyInMilliseconds, PowerSensor.Writer out) throws Exception {
+        start(durationInSeconds, frequencyInMilliseconds, false, out);
+    }
 
-            if (duration > 0) {
-                executor.schedule(() -> stop(out), duration, TimeUnit.SECONDS);
+    void start(long durationInSeconds, long frequencyInMilliseconds, boolean skipBaseline, PowerSensor.Writer out)
+            throws Exception {
+        if (!isRunning()) {
+            if (!skipBaseline && baseline == null) {
+                out.println("Establishing baseline for 30s, please do not use your application until done.");
+                out.println("Power measurement will start as configured after this initial measure is done.");
+                doStart(30, 1000, out, () -> baselineDone(durationInSeconds, frequencyInMilliseconds, out));
+            } else {
+                doStart(durationInSeconds, frequencyInMilliseconds, out, () -> stop(out));
             }
 
-            scheduled = executor.scheduleAtFixedRate(() -> update(out),
-                    0, frequency,
-                    TimeUnit.MILLISECONDS);
         }
+    }
+
+    private void doStart(long duration, long frequency, PowerSensor.Writer out, Runnable doneAction) throws Exception {
+        measure = sensor.start(duration, frequency, out);
+
+        if (duration > 0) {
+            executor.schedule(doneAction, duration, TimeUnit.SECONDS);
+        }
+
+        scheduled = executor.scheduleAtFixedRate(() -> update(out),
+                0, frequency,
+                TimeUnit.MILLISECONDS);
     }
 
     private void update(PowerSensor.Writer out) {
@@ -75,9 +93,25 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         if (isRunning()) {
             sensor.stop();
             scheduled.cancel(true);
-            outputConsumptionSinceStarted(out);
+            outputConsumptionSinceStarted(out, false);
             lastMeasure = new StoppedPowerMeasure<>(measure);
             measure = null;
+        }
+    }
+
+    private void baselineDone(long durationInSeconds, long frequencyInMilliseconds, PowerSensor.Writer out) {
+        if (isRunning()) {
+            sensor.stop();
+            scheduled.cancel(true);
+            outputConsumptionSinceStarted(out, true);
+            baseline = new StoppedPowerMeasure<>(measure);
+            out.println("Baseline established! You can now interact with your application normally.");
+            measure = null;
+            try {
+                doStart(durationInSeconds, frequencyInMilliseconds, out, () -> stop(out));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -95,10 +129,20 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         }
     }
 
-    private void outputConsumptionSinceStarted(PowerSensor.Writer out) {
+    private void outputConsumptionSinceStarted(PowerSensor.Writer out, boolean isBaseline) {
         out = out == null ? System.out::println : out;
-        out.println("Consumed " + measure.total() + " mW over " + (measure.duration() / 1000)
+        final var durationInSeconds = measure.duration() / 1000;
+        final var title = isBaseline ? "Baseline power: " : "Measured power: ";
+        out.println(title + getReadablePower(measure) + " over " + durationInSeconds
                 + " seconds (" + measure.numberOfSamples() + " samples)");
-        sensor.additionalInfo(measure, out);
+        if (!isBaseline) {
+            sensor.additionalInfo(measure, out);
+            out.println("Baseline power was " + getReadablePower(baseline));
+        }
+    }
+
+    private static String getReadablePower(PowerMeasure<?> measure) {
+        final var measuredMilliWatts = measure.total();
+        return measuredMilliWatts >= 1000 ? (measuredMilliWatts / 1000) + " W" : measuredMilliWatts + "mW";
     }
 }
