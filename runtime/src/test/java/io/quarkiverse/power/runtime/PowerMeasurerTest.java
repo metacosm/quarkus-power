@@ -16,7 +16,7 @@ public class PowerMeasurerTest {
         sensor = Mockito.spy(sensor);
         final var measurer = new PowerMeasurer<>(sensor);
 
-        measurer.start(1, 100, null);
+        measurer.start(1, 100, true, null);
         Thread.sleep(2000);
         final var measure = measurer.current();
         assertEquals(10, measure.numberOfSamples());
