@@ -22,7 +22,6 @@ class RAPLFileTest {
         final var file = Path.of("target/test.txt");
         final var value = Math.abs(new Random().nextLong());
         Files.writeString(file, value + "\n");
-        System.out.println("value = " + value);
         Thread.sleep(50);
 
         final var raplFile = IntelRAPLSensor.ByteBufferRAPLFile.createFrom(file);

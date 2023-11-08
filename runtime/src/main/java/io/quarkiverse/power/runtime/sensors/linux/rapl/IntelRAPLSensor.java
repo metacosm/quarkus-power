@@ -26,23 +26,6 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
         }
     }
 
-    private static class NaiveRAPLFile implements RAPLFile {
-        private final Path path;
-
-        private NaiveRAPLFile(Path path) {
-            this.path = path;
-        }
-
-        @Override
-        public long extractPowerMeasure() {
-            try {
-                return Long.parseLong(Files.readString(path).trim());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
     static class ByteBufferRAPLFile implements RAPLFile {
         private static final int CAPACITY = 64;
         private final ByteBuffer buffer;
@@ -124,7 +107,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
     }
 
     @Override
-    public OngoingPowerMeasure<IntelRAPLMeasure> start(long duration, long frequency, Writer out) throws Exception {
+    public OngoingPowerMeasure<IntelRAPLMeasure> start(long duration, long frequency) throws Exception {
         this.frequency = frequency;
         IntelRAPLMeasure measure = new IntelRAPLMeasure();
         update(measure);
@@ -137,7 +120,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
     }
 
     @Override
-    public void update(OngoingPowerMeasure<IntelRAPLMeasure> ongoingMeasure, Writer out) {
+    public void update(OngoingPowerMeasure<IntelRAPLMeasure> ongoingMeasure) {
         update(ongoingMeasure.sensorMeasure());
     }
 }

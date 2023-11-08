@@ -1,10 +1,10 @@
 package io.quarkiverse.power.runtime;
 
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
 
@@ -26,8 +26,10 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private ScheduledFuture<?> scheduled;
     private final PowerSensor<M> sensor;
     private OngoingPowerMeasure<M> measure;
-    private StoppedPowerMeasure<M> lastMeasure;
-    private StoppedPowerMeasure<M> baseline;
+
+    private Consumer<PowerMeasure<M>> completed;
+    private BiConsumer<Integer, PowerMeasure<M>> sampled;
+    private Consumer<Exception> errorHandler;
 
     private final static PowerMeasurer<? extends SensorMeasure> instance = new PowerMeasurer<>(
             PowerSensorProducer.determinePowerSensor());
@@ -46,103 +48,83 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
-    PowerSensor<M> sensor() {
-        return sensor;
+    public void onCompleted(Consumer<PowerMeasure<M>> completed) {
+        this.completed = completed;
+    }
+
+    public void onSampled(BiConsumer<Integer, PowerMeasure<M>> sampled) {
+        this.sampled = sampled;
+    }
+
+    public void onError(Consumer<Exception> errorHandler) {
+        this.errorHandler = errorHandler != null ? errorHandler : (exception) -> {
+            throw new RuntimeException(exception);
+        };
+    }
+
+    public Optional<String> additionalSensorInfo() {
+        return Optional.ofNullable(measure).flatMap(sensor::additionalInfo);
     }
 
     public boolean isRunning() {
         return measure != null;
     }
 
-    public void start(long durationInSeconds, long frequencyInMilliseconds, PowerSensor.Writer out) throws Exception {
-        start(durationInSeconds, frequencyInMilliseconds, false, out);
-    }
-
-    void start(long durationInSeconds, long frequencyInMilliseconds, boolean skipBaseline, PowerSensor.Writer out)
+    public void start(long durationInSeconds, long frequencyInMilliseconds)
             throws Exception {
-        if (!isRunning()) {
-            if (!skipBaseline && baseline == null) {
-                out.println("Establishing baseline for 30s, please do not use your application until done.");
-                out.println("Power measurement will start as configured after this initial measure is done.");
-                doStart(30, 1000, out, () -> baselineDone(durationInSeconds, frequencyInMilliseconds, out));
-            } else {
-                doStart(durationInSeconds, frequencyInMilliseconds, out, () -> stop(out));
+        try {
+            measure = sensor.start(durationInSeconds, frequencyInMilliseconds);
+
+            if (durationInSeconds > 0) {
+                executor.schedule(this::stop, durationInSeconds, TimeUnit.SECONDS);
             }
 
+            scheduled = executor.scheduleAtFixedRate(this::update, 0, frequencyInMilliseconds, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            handleError(e);
         }
     }
 
-    private void doStart(long duration, long frequency, PowerSensor.Writer out, Runnable doneAction) throws Exception {
-        measure = sensor.start(duration, frequency, out);
-
-        if (duration > 0) {
-            executor.schedule(doneAction, duration, TimeUnit.SECONDS);
-        }
-
-        scheduled = executor.scheduleAtFixedRate(() -> update(out),
-                0, frequency,
-                TimeUnit.MILLISECONDS);
-    }
-
-    private void update(PowerSensor.Writer out) {
-        sensor.update(measure, out);
-        measure.incrementSamples();
-    }
-
-    public void stop(PowerSensor.Writer out) {
-        if (isRunning()) {
-            sensor.stop();
-            scheduled.cancel(true);
-            outputConsumptionSinceStarted(out, false);
-            lastMeasure = new StoppedPowerMeasure<>(measure);
-            measure = null;
-        }
-    }
-
-    private void baselineDone(long durationInSeconds, long frequencyInMilliseconds, PowerSensor.Writer out) {
-        if (isRunning()) {
-            sensor.stop();
-            scheduled.cancel(true);
-            outputConsumptionSinceStarted(out, true);
-            baseline = new StoppedPowerMeasure<>(measure);
-            out.println("Baseline established! You can now interact with your application normally.");
-            measure = null;
-            try {
-                doStart(durationInSeconds, frequencyInMilliseconds, out, () -> stop(out));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+    private void update() {
+        try {
+            sensor.update(measure);
+            measure.incrementSamples();
+            if (this.sampled != null) {
+                sampled.accept(measure.numberOfSamples(), measure);
             }
+        } catch (Exception e) {
+            handleError(e);
         }
     }
 
-    public PowerMeasure<M> current() {
-        // use the ongoing power measure if it exists
-        if (measure == null) {
-            // or use the last recorded measure if we have one
-            if (lastMeasure != null) {
-                return lastMeasure;
-            } else {
-                throw new IllegalStateException("No power measure found. Please start it first.");
+    private void handleError(Exception e) {
+        errorHandler.accept(e);
+        try {
+            if (scheduled != null) {
+                scheduled.cancel(true);
             }
-        } else {
-            return measure;
+            if (sensor != null) {
+                sensor.stop();
+            }
+        } catch (Exception ex) {
+            // ignore shutting down exceptions
         }
     }
 
-    private void outputConsumptionSinceStarted(PowerSensor.Writer out, boolean isBaseline) {
-        out = out == null ? System.out::println : out;
-        final var durationInSeconds = measure.duration() / 1000;
-        final var title = isBaseline ? "Baseline power: " : "Measured power: ";
-        out.println(title + getReadablePower(measure) + " over " + durationInSeconds
-                + " seconds (" + measure.numberOfSamples() + " samples)");
-        if (!isBaseline) {
-            sensor.additionalInfo(measure, out);
-            out.println("Baseline power was " + getReadablePower(baseline));
+    public void stop() {
+        try {
+            if (isRunning()) {
+                sensor.stop();
+                scheduled.cancel(true);
+                // record the result
+                final var measured = new StoppedPowerMeasure<>(measure);
+                // then set the measure to null to mark that we're ready for a new measure
+                measure = null;
+                // and finally, but only then, run the completion handler
+                completed.accept(measured);
+            }
+        } catch (Exception e) {
+            handleError(e);
         }
-    }
-
-    private static String getReadablePower(PowerMeasure<?> measure) {
-        final var measuredMilliWatts = measure.total();
-        return measuredMilliWatts >= 1000 ? (measuredMilliWatts / 1000) + " W" : measuredMilliWatts + "mW";
     }
 }

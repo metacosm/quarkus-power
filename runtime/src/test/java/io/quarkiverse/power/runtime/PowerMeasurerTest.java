@@ -12,14 +12,13 @@ import io.quarkiverse.power.runtime.sensors.PowerSensorProducer;
 public class PowerMeasurerTest {
     @Test
     void startShouldAccumulateOverSpecifiedDurationAndStop() throws Exception {
-        PowerSensor<? extends IncrementableMeasure> sensor = PowerSensorProducer.determinePowerSensor();
-        sensor = Mockito.spy(sensor);
+        final PowerSensor<? extends IncrementableMeasure> sensor = Mockito.spy(PowerSensorProducer.determinePowerSensor());
         final var measurer = new PowerMeasurer<>(sensor);
 
-        measurer.start(1, 100, true, null);
-        Thread.sleep(2000);
-        final var measure = measurer.current();
-        assertEquals(10, measure.numberOfSamples());
-        Mockito.verify(sensor, Mockito.times(10)).update(Mockito.any(), Mockito.any());
+        measurer.start(1, 100);
+        measurer.onCompleted(measure -> {
+            assertEquals(10, measure.numberOfSamples());
+            Mockito.verify(sensor, Mockito.times(10)).update(Mockito.any());
+        });
     }
 }
