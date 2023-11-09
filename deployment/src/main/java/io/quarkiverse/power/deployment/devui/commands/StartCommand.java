@@ -71,18 +71,12 @@ public class StartCommand extends QuarkusCommand {
     }
 
     private void outputConsumptionSinceStarted(PowerMeasure<?> measure, CommandInvocation out, boolean isBaseline) {
-        final var durationInSeconds = measure.duration() / 1000;
-        final var title = isBaseline ? "Baseline power: " : "Measured power: ";
-        out.println(title + getReadablePower(measure) + " over " + durationInSeconds
-                + " seconds (" + measure.numberOfSamples() + " samples)");
+        final var title = isBaseline ? "\nBaseline => " : "\nMeasured => ";
+        out.println(title + PowerMeasure.asString(measure));
         if (!isBaseline) {
             sensor.additionalSensorInfo().ifPresent(out::println);
-            out.println("Baseline power was " + getReadablePower(baseline));
+            out.println("Baseline => " + PowerMeasure.asString(baseline));
+            out.println("Average ∆ => " + PowerMeasure.readableWithUnit(measure.average() - baseline.average()));
         }
-    }
-
-    private static String getReadablePower(PowerMeasure<?> measure) {
-        final var measuredMilliWatts = measure.total();
-        return measuredMilliWatts >= 1000 ? (measuredMilliWatts / 1000) + " W" : measuredMilliWatts + "mW";
     }
 }
