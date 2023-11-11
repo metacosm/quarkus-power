@@ -48,8 +48,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 true);
     }
 
-    AppleSiliconMeasure extractPowerMeasure(OngoingPowerMeasure ongoingMeasure,
-            InputStream powerMeasureInput,
+    AppleSiliconMeasure extractPowerMeasure(OngoingPowerMeasure ongoingMeasure, InputStream powerMeasureInput,
             String paddedPIDAsString, boolean returnCurrent) {
         try {
             // Should not be closed since it closes the process
@@ -124,10 +123,10 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
 
     @Override
     public OngoingPowerMeasure start(long duration, long frequency) throws Exception {
-        final var freq = Long.toString(Math.round(frequency));
+        // it takes some time for the external process in addition to the sampling time so adjust the sampling frequency to account for this so that at most one measure occurs during the sampling time window
+        final var freq = Long.toString(frequency - 50);
         powermetrics = Runtime.getRuntime()
-                .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
-                        + freq);
+                .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i " + freq);
         accumulatedCPUShareDiff = 0.0;
         return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA);
     }
