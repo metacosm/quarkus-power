@@ -24,7 +24,7 @@ class RAPLFileTest {
         Files.writeString(file, value + "\n");
         Thread.sleep(50);
 
-        final var raplFile = IntelRAPLSensor.ByteBufferRAPLFile.createFrom(file);
+        final var raplFile = ByteBufferRAPLFile.createFrom(file);
         final var measure = raplFile.extractPowerMeasure();
         assertEquals(value, measure);
     }

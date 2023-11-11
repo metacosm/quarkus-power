@@ -1,64 +1,67 @@
 package io.quarkiverse.power.runtime.sensors;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.quarkiverse.power.runtime.PowerMeasure;
+import io.quarkiverse.power.runtime.SensorMetadata;
 
-public class OngoingPowerMeasure<M extends IncrementableMeasure>
-        implements IncrementableMeasure, PowerMeasure<M> {
-    private final M measure;
+public class OngoingPowerMeasure implements PowerMeasure {
+    private final SensorMetadata sensorMetadata;
     private final long startedAt;
-    private int samplesNb;
+    private final List<double[]> measures = new ArrayList<>();
+    private double[] current;
+    private double total;
 
-    public OngoingPowerMeasure(M measure) {
+    public OngoingPowerMeasure(SensorMetadata sensorMetadata) {
         startedAt = System.currentTimeMillis();
-        samplesNb = 0;
-        this.measure = measure;
+        this.sensorMetadata = sensorMetadata;
     }
 
-    public void incrementSamples() {
-        samplesNb++;
+    public void startNewMeasure() {
+        if (current != null) {
+            throw new IllegalStateException("A new measure cannot be started while one is still ongoing");
+        }
+        current = new double[sensorMetadata.componentCardinality()];
+    }
+
+    public void setComponent(int index, double value) {
+        current[index] = value;
+    }
+
+    public double[] stopMeasure() {
+        final var recorded = new double[current.length];
+        System.arraycopy(current, 0, recorded, 0, current.length);
+        measures.add(recorded);
+        var currentMeasureTotal = 0.0;
+        for (double value : recorded) {
+            currentMeasureTotal += value;
+        }
+        total += currentMeasureTotal;
+        current = null;
+        return recorded;
     }
 
     @Override
-    public double cpu() {
-        return measure.cpu();
-    }
-
-    @Override
-    public Optional<Double> gpu() {
-        return measure.gpu();
-    }
-
-    @Override
-    public Optional<Double> byKey(String key) {
-        return measure.byKey(key);
+    public List<double[]> measures() {
+        return measures;
     }
 
     @Override
     public double total() {
-        return measure.total();
+        return total;
+    }
+
+    @Override
+    public SensorMetadata metadata() {
+        return sensorMetadata;
     }
 
     public int numberOfSamples() {
-        return samplesNb;
+        return measures.size();
     }
 
     public long duration() {
         return System.currentTimeMillis() - startedAt;
-    }
-
-    @Override
-    public void addCPU(double v) {
-        measure.addCPU(v);
-    }
-
-    @Override
-    public void addGPU(double v) {
-        measure.addGPU(v);
-    }
-
-    public M sensorMeasure() {
-        return measure;
     }
 }

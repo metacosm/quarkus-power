@@ -15,6 +15,15 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     private Process powermetrics;
     private final static String pid = " " + ProcessHandle.current().pid() + " ";
     private double accumulatedCPUShareDiff = 0.0;
+    private final int cpu;
+    private final int gpu;
+    private final int ane;
+
+    public MacOSPowermetricsSensor() {
+        ane = AppleSiliconMeasure.METADATA.indexFor(AppleSiliconMeasure.ANE);
+        cpu = AppleSiliconMeasure.METADATA.indexFor(AppleSiliconMeasure.CPU);
+        gpu = AppleSiliconMeasure.METADATA.indexFor(AppleSiliconMeasure.GPU);
+    }
 
     private static class ProcessRecord {
         final double cpu;
@@ -30,18 +39,18 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure) {
-        extractPowerMeasure(ongoingMeasure, powermetrics.getInputStream(), pid);
+    public void update(OngoingPowerMeasure ongoingMeasure) {
+        extractPowerMeasure(ongoingMeasure, powermetrics.getInputStream(), pid, false);
     }
 
     AppleSiliconMeasure extractPowerMeasure(InputStream powerMeasureInput, long pid) {
-        return extractPowerMeasure(new OngoingPowerMeasure<>(new AppleSiliconMeasure()), powerMeasureInput, " " + pid + " ");
+        return extractPowerMeasure(new OngoingPowerMeasure(AppleSiliconMeasure.METADATA), powerMeasureInput, " " + pid + " ",
+                true);
     }
 
-    AppleSiliconMeasure extractPowerMeasure(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure,
+    AppleSiliconMeasure extractPowerMeasure(OngoingPowerMeasure ongoingMeasure,
             InputStream powerMeasureInput,
-            String paddedPIDAsString) {
-        final var accumulatedPower = ongoingMeasure.sensorMeasure();
+            String paddedPIDAsString, boolean returnCurrent) {
         try {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powerMeasureInput));
@@ -49,6 +58,8 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
             double cpuShare = -1, gpuShare = -1;
             boolean totalDone = false;
             boolean cpuDone = false;
+            // start measure
+            ongoingMeasure.startNewMeasure();
             while ((line = input.readLine()) != null) {
                 if (line.isEmpty() || line.startsWith("*")) {
                     continue;
@@ -80,7 +91,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                     // look for line that contains CPU power measure
                     if (line.startsWith("CPU Power")) {
                         final var jmxCpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
-                        accumulatedPower.addCPU(extractAttributedMeasure(line, cpuShare));
+                        ongoingMeasure.setComponent(cpu, extractAttributedMeasure(line, cpuShare));
                         accumulatedCPUShareDiff += (cpuShare - jmxCpuShare);
                         cpuDone = true;
                     }
@@ -88,19 +99,21 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 }
 
                 if (line.startsWith("GPU Power")) {
-                    accumulatedPower.addGPU(extractAttributedMeasure(line, gpuShare));
+                    ongoingMeasure.setComponent(gpu, extractAttributedMeasure(line, gpuShare));
                     continue;
                 }
 
                 if (line.startsWith("ANE Power")) {
-                    accumulatedPower.addANE(extractAttributedMeasure(line, 1));
+                    ongoingMeasure.setComponent(ane, extractAttributedMeasure(line, 1));
                     break;
                 }
             }
+
+            final var measure = ongoingMeasure.stopMeasure();
+            return returnCurrent ? new AppleSiliconMeasure(measure) : null;
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
-        return accumulatedPower;
     }
 
     private static double extractAttributedMeasure(String line, double attributionRatio) {
@@ -110,13 +123,13 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency) throws Exception {
+    public OngoingPowerMeasure start(long duration, long frequency) throws Exception {
         final var freq = Long.toString(Math.round(frequency));
         powermetrics = Runtime.getRuntime()
                 .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i "
                         + freq);
         accumulatedCPUShareDiff = 0.0;
-        return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
+        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA);
     }
 
     @Override
@@ -125,7 +138,12 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     @Override
-    public Optional<String> additionalInfo(PowerMeasure<AppleSiliconMeasure> measure) {
+    public Optional<String> additionalInfo(PowerMeasure measure) {
         return Optional.of("Powermetrics vs JMX CPU share accumulated difference: " + accumulatedCPUShareDiff);
+    }
+
+    @Override
+    public AppleSiliconMeasure measureFor(double[] measureComponents) {
+        return new AppleSiliconMeasure(measureComponents);
     }
 }

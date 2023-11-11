@@ -1,34 +1,36 @@
 package io.quarkiverse.power.runtime.sensors.macos;
 
-import java.util.Optional;
+import io.quarkiverse.power.runtime.SensorMeasure;
+import io.quarkiverse.power.runtime.SensorMetadata;
 
-import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
-
-public class AppleSiliconMeasure implements IncrementableMeasure {
-    private double cpu;
-    private double gpu;
-    private double ane;
+public class AppleSiliconMeasure implements SensorMeasure {
+    private final double cpu;
+    private final double gpu;
+    private final double ane;
     public static final String ANE = "ane";
+    public static final String CPU = "cpu";
+    public static final String GPU = "gpu";
+    public static final SensorMetadata METADATA = new SensorMetadata() {
+        @Override
+        public int indexFor(String component) {
+            return switch (component) {
+                case CPU -> 0;
+                case GPU -> 1;
+                case ANE -> 2;
+                default -> throw new IllegalArgumentException("Unknown component: " + component);
+            };
+        }
 
-    @Override
-    public double cpu() {
-        return cpu;
-    }
+        @Override
+        public int componentCardinality() {
+            return 3;
+        }
+    };
 
-    @Override
-    public Optional<Double> gpu() {
-        return Optional.of(gpu);
-    }
-
-    @Override
-    public Optional<Double> byKey(String key) {
-        return switch (key) {
-            case CPU -> Optional.of(cpu());
-            case GPU -> gpu();
-            case ANE -> Optional.of(ane);
-            case TOTAL -> Optional.of(total());
-            default -> Optional.empty();
-        };
+    public AppleSiliconMeasure(double[] components) {
+        this.cpu = components[METADATA.indexFor(CPU)];
+        this.gpu = components[METADATA.indexFor(GPU)];
+        this.ane = components[METADATA.indexFor(ANE)];
     }
 
     @Override
@@ -36,15 +38,12 @@ public class AppleSiliconMeasure implements IncrementableMeasure {
         return cpu + gpu + ane;
     }
 
-    public void addCPU(double v) {
-        cpu += v;
+    @Override
+    public SensorMetadata metadata() {
+        return METADATA;
     }
 
-    public void addGPU(double v) {
-        gpu += v;
-    }
-
-    public void addANE(double v) {
-        ane += v;
+    public double cpu() {
+        return cpu;
     }
 }

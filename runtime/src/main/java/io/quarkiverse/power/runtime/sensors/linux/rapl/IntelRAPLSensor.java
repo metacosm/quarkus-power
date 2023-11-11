@@ -1,87 +1,61 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import io.quarkiverse.power.runtime.PowerMeasurer;
+import io.quarkiverse.power.runtime.SensorMetadata;
 import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
-    private final Map<String, RAPLFile> raplFiles = new HashMap<>();
+    private final RAPLFile[] raplFiles;
+    private final SensorMetadata metadata;
+    private final double[] lastMeasuredSensorValues;
     private long frequency;
-
-    interface RAPLFile {
-        long extractPowerMeasure();
-
-        static RAPLFile createFrom(Path file) {
-            return ByteBufferRAPLFile.createFrom(file);
-        }
-    }
-
-    static class ByteBufferRAPLFile implements RAPLFile {
-        private static final int CAPACITY = 64;
-        private final ByteBuffer buffer;
-        private final FileChannel channel;
-
-        private ByteBufferRAPLFile(FileChannel channel) {
-            this.channel = channel;
-            buffer = ByteBuffer.allocate(CAPACITY);
-        }
-
-        static RAPLFile createFrom(Path file) {
-            try {
-                return new ByteBufferRAPLFile(new RandomAccessFile(file.toFile(), "r").getChannel());
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public long extractPowerMeasure() {
-            try {
-                channel.read(buffer);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            long value = 0;
-            // will work even better if we can hard code as a static final const the length, in case won't change or is defined by spec
-            for (int i = 0; i < CAPACITY; i++) {
-                byte digit = buffer.get(i);
-                if (digit >= '0' && digit <= '9') {
-                    value = value * 10 + (digit - '0');
-                } else {
-                    if (digit == '\n') {
-                        return value;
-                    }
-                    // Invalid character; handle accordingly or throw an exception
-                    throw new NumberFormatException("Invalid character in input: '" + Character.toString(digit) + "'");
-                }
-            }
-            return value;
-        }
-    }
 
     public IntelRAPLSensor() {
         // if we total system energy is not available, read package and DRAM if possible
         // todo: check Intel doc
-        if (!checkAvailablity("/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj")) {
-            checkAvailablity("/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj");
-            checkAvailablity("/sys/class/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:2/energy_uj");
+        final var files = new TreeMap<String, RAPLFile>();
+        if (!addFileIfReadable("/sys/class/powercap/intel-rapl/intel-rapl:1/energy_uj", files)) {
+            addFileIfReadable("/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj", files);
+            addFileIfReadable("/sys/class/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:2/energy_uj", files);
         }
 
-        if (raplFiles.isEmpty()) {
+        if (files.isEmpty()) {
             throw new RuntimeException("Failed to get RAPL energy readings, probably due to lack of read access ");
         }
+
+        raplFiles = files.values().toArray(new RAPLFile[0]);
+        final var metadata = new HashMap<String, Integer>(files.size());
+        int fileNb = 0;
+        for (String name : files.keySet()) {
+            metadata.put(name, fileNb++);
+        }
+        this.metadata = new SensorMetadata() {
+            @Override
+            public int indexFor(String component) {
+                final var index = metadata.get(component);
+                if (index == null) {
+                    throw new IllegalArgumentException("Unknow component: " + component);
+                }
+                return index;
+            }
+
+            @Override
+            public int componentCardinality() {
+                return metadata.size();
+            }
+        };
+        lastMeasuredSensorValues = new double[raplFiles.length];
     }
 
-    private boolean checkAvailablity(String raplFileAsString) {
+    private boolean addFileIfReadable(String raplFileAsString, SortedMap<String, RAPLFile> files) {
         final var raplFile = Path.of(raplFileAsString);
         if (isReadable(raplFile)) {
             // get metric name
@@ -92,7 +66,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
 
             try {
                 final var name = Files.readString(nameFile).trim();
-                raplFiles.put(name, RAPLFile.createFrom(raplFile));
+                files.put(name, RAPLFile.createFrom(raplFile));
             } catch (IOException e) {
                 e.printStackTrace();
                 return false;
@@ -107,20 +81,32 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
     }
 
     @Override
-    public OngoingPowerMeasure<IntelRAPLMeasure> start(long duration, long frequency) throws Exception {
+    public OngoingPowerMeasure start(long duration, long frequency) throws Exception {
         this.frequency = frequency;
-        IntelRAPLMeasure measure = new IntelRAPLMeasure();
-        update(measure);
-        return new OngoingPowerMeasure<>(measure);
+
+        // perform an initial measure to prime the data
+        final var ongoingMeasure = new OngoingPowerMeasure(metadata);
+        update(ongoingMeasure);
+        return ongoingMeasure;
     }
 
-    private void update(IntelRAPLMeasure measure) {
-        double cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
-        raplFiles.forEach((name, buffer) -> measure.updateValue(name, buffer.extractPowerMeasure(), cpuShare, frequency));
+    private double computeNewComponentValue(int componentIndex, long sensorValue, double cpuShare) {
+        return (sensorValue - lastMeasuredSensorValues[componentIndex]) * cpuShare / frequency / 1000;
     }
 
     @Override
-    public void update(OngoingPowerMeasure<IntelRAPLMeasure> ongoingMeasure) {
-        update(ongoingMeasure.sensorMeasure());
+    public void update(OngoingPowerMeasure ongoingMeasure) {
+        double cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
+        for (int i = 0; i < raplFiles.length; i++) {
+            final var value = raplFiles[i].extractPowerMeasure();
+            final var newComponentValue = computeNewComponentValue(i, value, cpuShare);
+            ongoingMeasure.setComponent(i, newComponentValue);
+            lastMeasuredSensorValues[i] = newComponentValue;
+        }
+    }
+
+    @Override
+    public IntelRAPLMeasure measureFor(double[] measureComponents) {
+        return new IntelRAPLMeasure(metadata, measureComponents);
     }
 }
