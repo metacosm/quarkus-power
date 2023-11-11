@@ -5,14 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.PowerSensorProducer;
 
 public class PowerMeasurerTest {
     @Test
     void startShouldAccumulateOverSpecifiedDurationAndStop() throws Exception {
-        final PowerSensor<? extends IncrementableMeasure> sensor = Mockito.spy(PowerSensorProducer.determinePowerSensor());
+        final PowerSensor<? extends SensorMeasure> sensor = Mockito.spy(PowerSensorProducer.determinePowerSensor());
         final var measurer = new PowerMeasurer<>(sensor);
 
         measurer.start(1, 100);

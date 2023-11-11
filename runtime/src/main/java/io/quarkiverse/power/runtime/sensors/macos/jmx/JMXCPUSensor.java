@@ -12,16 +12,18 @@ import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
     public static PowerSensor<AppleSiliconMeasure> instance = new JMXCPUSensor();
     private Process powermetrics;
+    private int cpu;
 
     @Override
-    public OngoingPowerMeasure<AppleSiliconMeasure> start(long duration, long frequency)
+    public OngoingPowerMeasure start(long duration, long frequency)
             throws Exception {
         final var freq = Long.toString(Math.round(frequency));
         powermetrics = Runtime.getRuntime().exec("sudo powermetrics --samplers cpu_power -i " + freq);
-        return new OngoingPowerMeasure<>(new AppleSiliconMeasure());
+        cpu = AppleSiliconMeasure.METADATA.indexFor(AppleSiliconMeasure.CPU);
+        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA);
     }
 
-    public void update(OngoingPowerMeasure<AppleSiliconMeasure> ongoingMeasure) {
+    public void update(OngoingPowerMeasure ongoingMeasure) {
         try {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powermetrics.getInputStream()));
@@ -37,13 +39,18 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
                     if (cpuShare <= 0) {
                         break;
                     }
-                    ongoingMeasure.addCPU(extractAttributedMeasure(line, cpuShare));
+                    ongoingMeasure.setComponent(cpu, extractAttributedMeasure(line, cpuShare));
                     break;
                 }
             }
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
+    }
+
+    @Override
+    public AppleSiliconMeasure measureFor(double[] measureComponents) {
+        return new AppleSiliconMeasure(measureComponents);
     }
 
     private static double extractAttributedMeasure(String line, double attributionRatio) {

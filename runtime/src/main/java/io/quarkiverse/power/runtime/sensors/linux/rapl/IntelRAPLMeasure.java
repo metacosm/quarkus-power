@@ -1,67 +1,35 @@
 package io.quarkiverse.power.runtime.sensors.linux.rapl;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Arrays;
 
 import io.quarkiverse.power.runtime.SensorMeasure;
-import io.quarkiverse.power.runtime.sensors.IncrementableMeasure;
+import io.quarkiverse.power.runtime.SensorMetadata;
 
-public class IntelRAPLMeasure implements IncrementableMeasure {
-    private final Map<String, Accumulator> values = new HashMap<>();
+public class IntelRAPLMeasure implements SensorMeasure {
 
-    static class Accumulator {
-        private final AtomicLong previous = new AtomicLong(0);
-        private double accumulated;
+    private final SensorMetadata metadata;
+    private final double[] measure;
 
-        private Accumulator recordNewValue(long currentValue, double share, long duration) {
-            accumulated += (currentValue - previous.getAndSet(currentValue)) * share / duration;
-            return this;
+    IntelRAPLMeasure(SensorMetadata metadata, double[] measure) {
+        if (measure.length != metadata.componentCardinality()) {
+            throw new IllegalArgumentException(
+                    "Provided measure " + Arrays.toString(measure) + " doesn't match provided metadata: " + metadata);
         }
-
-        public double accumulated() {
-            return accumulated;
-        }
-    }
-
-    double getValue(String name) {
-        final var value = values.get(name);
-        return value == null ? 0.0 : value.accumulated() / 1000;
-    }
-
-    void updateValue(String name, long current, double cpuShare, long duration) {
-        values.computeIfAbsent(name, k -> new Accumulator()).recordNewValue(current, cpuShare, duration);
-    }
-
-    @Override
-    public double cpu() {
-        return getValue("package-0");
-    }
-
-    @Override
-    public Optional<Double> gpu() {
-        return Optional.ofNullable(values.get(SensorMeasure.GPU)).map(value -> value.accumulated() / 1000);
-    }
-
-    @Override
-    public Optional<Double> byKey(String key) {
-        final var v = IncrementableMeasure.super.byKey(key); // first get from default implementation
-        if (v.isEmpty()) {
-            // try local keys
-            return Optional.ofNullable(values.get(key)).map(value -> value.accumulated() / 1000);
-        } else {
-            return v;
-        }
+        this.metadata = metadata;
+        this.measure = measure;
     }
 
     @Override
     public double total() {
-        return values.values().stream().map(Accumulator::accumulated).reduce(Double::sum).orElse(0.0) / 1000;
+        double total = 0.0;
+        for (double value : measure) {
+            total += value;
+        }
+        return total;
     }
 
     @Override
-    public void addCPU(double v) {
-        throw new IllegalStateException("Shouldn't be called");
+    public SensorMetadata metadata() {
+        return metadata;
     }
 }

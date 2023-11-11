@@ -10,7 +10,7 @@ import com.sun.management.OperatingSystemMXBean;
 
 import io.quarkiverse.power.runtime.sensors.*;
 
-public class PowerMeasurer<M extends IncrementableMeasure> {
+public class PowerMeasurer<M extends SensorMeasure> {
     private static final OperatingSystemMXBean osBean;
 
     static {
@@ -25,10 +25,10 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> scheduled;
     private final PowerSensor<M> sensor;
-    private OngoingPowerMeasure<M> measure;
+    private OngoingPowerMeasure measure;
 
-    private Consumer<PowerMeasure<M>> completed;
-    private BiConsumer<Integer, PowerMeasure<M>> sampled;
+    private Consumer<PowerMeasure> completed;
+    private BiConsumer<Integer, PowerMeasure> sampled;
     private Consumer<Exception> errorHandler;
 
     private final static PowerMeasurer<? extends SensorMeasure> instance = new PowerMeasurer<>(
@@ -48,11 +48,11 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
         return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
-    public void onCompleted(Consumer<PowerMeasure<M>> completed) {
+    public void onCompleted(Consumer<PowerMeasure> completed) {
         this.completed = completed;
     }
 
-    public void onSampled(BiConsumer<Integer, PowerMeasure<M>> sampled) {
+    public void onSampled(BiConsumer<Integer, PowerMeasure> sampled) {
         this.sampled = sampled;
     }
 
@@ -88,7 +88,6 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
     private void update() {
         try {
             sensor.update(measure);
-            measure.incrementSamples();
             if (this.sampled != null) {
                 sampled.accept(measure.numberOfSamples(), measure);
             }
@@ -117,7 +116,7 @@ public class PowerMeasurer<M extends IncrementableMeasure> {
                 sensor.stop();
                 scheduled.cancel(true);
                 // record the result
-                final var measured = new StoppedPowerMeasure<>(measure);
+                final var measured = new StoppedPowerMeasure(measure);
                 // then set the measure to null to mark that we're ready for a new measure
                 measure = null;
                 // and finally, but only then, run the completion handler

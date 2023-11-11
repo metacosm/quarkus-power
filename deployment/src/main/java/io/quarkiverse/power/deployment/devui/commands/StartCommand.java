@@ -13,7 +13,7 @@ import io.quarkus.deployment.console.QuarkusCommand;
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")
 public class StartCommand extends QuarkusCommand {
     private final PowerMeasurer<? extends SensorMeasure> sensor;
-    private PowerMeasure<?> baseline;
+    private PowerMeasure baseline;
 
     @Option(name = "stopAfter", shortName = 's', description = "Automatically stop the measures after the specified duration in seconds", defaultValue = "-1")
     private long duration;
@@ -41,7 +41,10 @@ public class StartCommand extends QuarkusCommand {
                     commandInvocation.println("Establishing baseline for 30s, please do not use your application until done.");
                     commandInvocation.println("Power measurement will start as configured after this initial measure is done.");
                     sensor.start(30, 1000);
-                    sensor.onError(e -> commandInvocation.println("An error occurred: " + e.getMessage()));
+                    sensor.onError(e -> {
+                        commandInvocation.println("An error occurred: " + e.getMessage());
+                        e.printStackTrace();
+                    });
                     sensor.onCompleted((m) -> {
                         baseline = m;
                         outputConsumptionSinceStarted(baseline, commandInvocation, true);
@@ -70,7 +73,7 @@ public class StartCommand extends QuarkusCommand {
         return CommandResult.SUCCESS;
     }
 
-    private void outputConsumptionSinceStarted(PowerMeasure<?> measure, CommandInvocation out, boolean isBaseline) {
+    private void outputConsumptionSinceStarted(PowerMeasure measure, CommandInvocation out, boolean isBaseline) {
         final var title = isBaseline ? "\nBaseline => " : "\nMeasured => ";
         out.println(title + PowerMeasure.asString(measure));
         if (!isBaseline) {
