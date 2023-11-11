@@ -11,12 +11,20 @@ public interface PowerMeasure extends SensorMeasure {
         return total() / numberOfSamples();
     }
 
+    default double standardDeviation() {
+        final var mean = average();
+        double sumOfSquares = measures().stream()
+                .mapToDouble(measure -> Math.pow(measure[0] - mean, 2))
+                .sum();
+        return Math.sqrt(sumOfSquares / (numberOfSamples() - 1));
+    }
+
     static String asString(PowerMeasure measure) {
         final var durationInSeconds = measure.duration() / 1000;
         final var samples = measure.numberOfSamples();
         final var measuredMilliWatts = measure.total();
-        return String.format("%s / avg: %s (%ds, %s samples)", readableWithUnit(measuredMilliWatts),
-                readableWithUnit(measure.average()), durationInSeconds,
+        return String.format("%s / avg: %s / std dev: %.3f (%ds, %s samples)", readableWithUnit(measuredMilliWatts),
+                readableWithUnit(measure.average()), measure.standardDeviation(), durationInSeconds,
                 samples);
     }
 
