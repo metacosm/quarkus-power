@@ -26,10 +26,16 @@ public class OngoingPowerMeasure implements PowerMeasure {
     }
 
     public void setComponent(int index, double value) {
+        if (current == null) {
+            throw new IllegalStateException("A new measure must be started before recording components");
+        }
         current[index] = value;
     }
 
     public double[] stopMeasure() {
+        if (current == null) {
+            throw new IllegalStateException("Measure was not started so cannot be stopped");
+        }
         final var recorded = new double[current.length];
         System.arraycopy(current, 0, recorded, 0, current.length);
         measures.add(recorded);
