@@ -25,7 +25,7 @@ power consumption, currently:
 - /sys/class/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:2/energy_uj
 
 For the extension to work properly, these files need to be readable by the current user, which you can accomplish by
-running `sudo chmod +r` on these files. Note that this change will only persist until the next restart.
+running the provided `make_power_readable.sh` script. Note that this change will only persist until the next restart.
 
 ## Usage
 
