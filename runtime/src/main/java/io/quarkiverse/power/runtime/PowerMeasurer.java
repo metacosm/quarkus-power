@@ -40,6 +40,7 @@ public class PowerMeasurer<M extends SensorMeasure> {
 
     public PowerMeasurer(PowerSensor<M> sensor) {
         this.sensor = sensor;
+        this.onError(null);
     }
 
     public double cpuShareOfJVMProcess() {
