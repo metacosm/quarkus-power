@@ -1,28 +1,21 @@
 package io.quarkiverse.power.runtime.sensors;
 
-import java.util.List;
-
 import io.quarkiverse.power.runtime.PowerMeasure;
-import io.quarkiverse.power.runtime.SensorMetadata;
 
-public class StoppedPowerMeasure implements PowerMeasure {
-    private final SensorMetadata metadata;
+public class StoppedPowerMeasure extends AbstractPowerMeasure {
     private final long duration;
-    private final int samples;
-    private final List<double[]> measures;
     private final double total;
+    private final double min;
+    private final double max;
+    private final double[] averages;
 
     public StoppedPowerMeasure(PowerMeasure powerMeasure) {
-        this.metadata = powerMeasure.metadata();
+        super(powerMeasure.metadata(), powerMeasure.measures());
         this.duration = powerMeasure.duration();
-        this.samples = powerMeasure.numberOfSamples();
-        this.measures = powerMeasure.measures();
         this.total = powerMeasure.total();
-    }
-
-    @Override
-    public int numberOfSamples() {
-        return samples;
+        this.min = powerMeasure.minMeasuredTotal();
+        this.max = powerMeasure.maxMeasuredTotal();
+        this.averages = powerMeasure.averagesPerComponent();
     }
 
     @Override
@@ -31,8 +24,13 @@ public class StoppedPowerMeasure implements PowerMeasure {
     }
 
     @Override
-    public List<double[]> measures() {
-        return measures;
+    public double minMeasuredTotal() {
+        return min;
+    }
+
+    @Override
+    public double maxMeasuredTotal() {
+        return max;
     }
 
     @Override
@@ -41,7 +39,7 @@ public class StoppedPowerMeasure implements PowerMeasure {
     }
 
     @Override
-    public SensorMetadata metadata() {
-        return metadata;
+    public double[] averagesPerComponent() {
+        return averages;
     }
 }

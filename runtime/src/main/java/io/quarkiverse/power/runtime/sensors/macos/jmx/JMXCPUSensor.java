@@ -20,7 +20,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
         final var freq = Long.toString(Math.round(frequency));
         powermetrics = Runtime.getRuntime().exec("sudo powermetrics --samplers cpu_power -i " + freq);
         cpu = AppleSiliconMeasure.METADATA.indexFor(AppleSiliconMeasure.CPU);
-        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA);
+        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA, duration, frequency);
     }
 
     public void update(OngoingPowerMeasure ongoingMeasure) {

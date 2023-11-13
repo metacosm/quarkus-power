@@ -1,28 +1,29 @@
 package io.quarkiverse.power.runtime.sensors;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-import io.quarkiverse.power.runtime.PowerMeasure;
 import io.quarkiverse.power.runtime.SensorMetadata;
 
-public class OngoingPowerMeasure implements PowerMeasure {
-    private final SensorMetadata sensorMetadata;
+public class OngoingPowerMeasure extends AbstractPowerMeasure {
     private final long startedAt;
-    private final List<double[]> measures = new ArrayList<>();
+    private double minTotal = Double.MAX_VALUE;
+    private double maxTotal;
+    private final double[] totals;
     private double[] current;
-    private double total;
 
-    public OngoingPowerMeasure(SensorMetadata sensorMetadata) {
+    public OngoingPowerMeasure(SensorMetadata sensorMetadata, long duration, long frequency) {
+        super(sensorMetadata, new ArrayList<>((int) (duration / frequency)));
         startedAt = System.currentTimeMillis();
-        this.sensorMetadata = sensorMetadata;
+        final var numComponents = metadata().componentCardinality();
+        totals = new double[numComponents];
     }
 
     public void startNewMeasure() {
         if (current != null) {
             throw new IllegalStateException("A new measure cannot be started while one is still ongoing");
         }
-        current = new double[sensorMetadata.componentCardinality()];
+        current = new double[metadata().componentCardinality()];
     }
 
     public void setComponent(int index, double value) {
@@ -30,6 +31,7 @@ public class OngoingPowerMeasure implements PowerMeasure {
             throw new IllegalStateException("A new measure must be started before recording components");
         }
         current[index] = value;
+        totals[index] += value;
     }
 
     public double[] stopMeasure() {
@@ -38,36 +40,42 @@ public class OngoingPowerMeasure implements PowerMeasure {
         }
         final var recorded = new double[current.length];
         System.arraycopy(current, 0, recorded, 0, current.length);
-        measures.add(recorded);
-        var currentMeasureTotal = 0.0;
-        for (double value : recorded) {
-            currentMeasureTotal += value;
+        measures().add(recorded);
+
+        // record min / max totals
+        final var recordedTotal = sumOfComponents(recorded);
+        if (recordedTotal < minTotal) {
+            minTotal = recordedTotal;
         }
-        total += currentMeasureTotal;
+        if (recordedTotal > maxTotal) {
+            maxTotal = recordedTotal;
+        }
+
         current = null;
         return recorded;
     }
 
     @Override
-    public List<double[]> measures() {
-        return measures;
-    }
-
-    @Override
     public double total() {
-        return total;
-    }
-
-    @Override
-    public SensorMetadata metadata() {
-        return sensorMetadata;
-    }
-
-    public int numberOfSamples() {
-        return measures.size();
+        return sumOfComponents(totals);
     }
 
     public long duration() {
         return System.currentTimeMillis() - startedAt;
+    }
+
+    @Override
+    public double minMeasuredTotal() {
+        return minTotal;
+    }
+
+    @Override
+    public double maxMeasuredTotal() {
+        return maxTotal;
+    }
+
+    @Override
+    public double[] averagesPerComponent() {
+        return Arrays.stream(totals).map(total -> total / numberOfSamples()).toArray();
     }
 }
