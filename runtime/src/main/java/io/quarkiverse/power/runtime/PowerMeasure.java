@@ -40,8 +40,10 @@ public interface PowerMeasure extends SensorMeasure {
         final var durationInSeconds = measure.duration() / 1000;
         final var samples = measure.numberOfSamples();
         final var measuredMilliWatts = measure.total();
-        return String.format("%s / avg: %s / std dev: %.3f (%ds, %s samples)", readableWithUnit(measuredMilliWatts),
-                readableWithUnit(measure.average()), measure.standardDeviation(), durationInSeconds,
+        return String.format("%s / avg: %s / std dev: %.3f [min: %.3f, max: %.3f] (%ds, %s samples)",
+                readableWithUnit(measuredMilliWatts),
+                readableWithUnit(measure.average()), measure.standardDeviation(), measure.minMeasuredTotal(),
+                measure.maxMeasuredTotal(), durationInSeconds,
                 samples);
     }
 
