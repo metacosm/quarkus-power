@@ -85,7 +85,7 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
         this.frequency = frequency;
 
         // perform an initial measure to prime the data
-        final var ongoingMeasure = new OngoingPowerMeasure(metadata);
+        final var ongoingMeasure = new OngoingPowerMeasure(metadata, duration, frequency);
         update(ongoingMeasure);
         return ongoingMeasure;
     }

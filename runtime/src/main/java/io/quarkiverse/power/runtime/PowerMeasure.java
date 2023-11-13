@@ -1,6 +1,7 @@
 package io.quarkiverse.power.runtime;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 public interface PowerMeasure extends SensorMeasure {
     int numberOfSamples();
@@ -11,12 +12,28 @@ public interface PowerMeasure extends SensorMeasure {
         return total() / numberOfSamples();
     }
 
+    double[] averagesPerComponent();
+
+    double minMeasuredTotal();
+
+    double maxMeasuredTotal();
+
     default double standardDeviation() {
-        final var mean = average();
-        double sumOfSquares = measures().stream()
-                .mapToDouble(measure -> Math.pow(measure[0] - mean, 2))
-                .sum();
-        return Math.sqrt(sumOfSquares / (numberOfSamples() - 1));
+        final var cardinality = metadata().componentCardinality();
+        final var samples = numberOfSamples() - 1; // unbiased so we remove one sample
+        // need to compute the average of variances then square root that to get the "aggregate" standard deviation, see: https://stats.stackexchange.com/a/26647
+        // "vectorize" computation of variances: compute the variance for each component in parallel
+        final var componentVarianceAverage = IntStream.range(0, cardinality).parallel()
+                // compute variances for each component of the measure
+                .mapToDouble(component -> {
+                    final var squaredDifferenceSum = measures().stream().parallel()
+                            .mapToDouble(m -> Math.pow(m[component] - averagesPerComponent()[component], 2))
+                            .sum();
+                    return squaredDifferenceSum / samples;
+                })
+                .average()
+                .orElse(0.0);
+        return Math.sqrt(componentVarianceAverage);
     }
 
     static String asString(PowerMeasure measure) {

@@ -44,7 +44,9 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
     }
 
     AppleSiliconMeasure extractPowerMeasure(InputStream powerMeasureInput, long pid) {
-        return extractPowerMeasure(new OngoingPowerMeasure(AppleSiliconMeasure.METADATA), powerMeasureInput, " " + pid + " ",
+        // one measure only
+        return extractPowerMeasure(new OngoingPowerMeasure(AppleSiliconMeasure.METADATA, 1, 1), powerMeasureInput,
+                " " + pid + " ",
                 true);
     }
 
@@ -128,7 +130,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
         powermetrics = Runtime.getRuntime()
                 .exec("sudo powermetrics --samplers cpu_power,tasks --show-process-samp-norm --show-process-gpu -i " + freq);
         accumulatedCPUShareDiff = 0.0;
-        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA);
+        return new OngoingPowerMeasure(AppleSiliconMeasure.METADATA, duration, frequency);
     }
 
     @Override
