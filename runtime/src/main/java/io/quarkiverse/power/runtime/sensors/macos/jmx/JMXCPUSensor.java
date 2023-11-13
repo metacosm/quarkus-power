@@ -28,6 +28,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
             // Should not be closed since it closes the process
             BufferedReader input = new BufferedReader(new InputStreamReader(powermetrics.getInputStream()));
             String line;
+            ongoingMeasure.startNewMeasure();
             while ((line = input.readLine()) != null) {
                 if (line.isEmpty() || line.startsWith("*")) {
                     continue;
@@ -43,6 +44,7 @@ public class JMXCPUSensor implements PowerSensor<AppleSiliconMeasure> {
                     break;
                 }
             }
+            ongoingMeasure.stopMeasure();
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
