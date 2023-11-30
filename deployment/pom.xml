@@ -15,6 +15,14 @@
       <artifactId>quarkus-arc-deployment</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-reactive-jackson-deployment</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-reactive-jackson-deployment</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.power</groupId>
       <artifactId>quarkus-power</artifactId>
       <version>${project.version}</version>
