@@ -12,7 +12,7 @@ public class PowerMeasurerTest {
     @Test
     void startShouldAccumulateOverSpecifiedDurationAndStop() throws Exception {
         final PowerSensor<? extends SensorMeasure> sensor = Mockito.spy(PowerSensorProducer.determinePowerSensor());
-        final var measurer = new PowerMeasurer<>(sensor);
+        final var measurer = new PowerMeasurer<>(new LocalSampler(sensor));
 
         measurer.start(1, 100);
         measurer.onCompleted(measure -> {
