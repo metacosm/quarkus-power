@@ -34,6 +34,13 @@ public class OngoingPowerMeasure extends AbstractPowerMeasure {
         totals[index] += value;
     }
 
+    public void setComponents(double[] components) {
+        current = components;
+        for (int i = 0; i < components.length; i++) {
+            totals[i] += components[i];
+        }
+    }
+
     public double[] stopMeasure() {
         if (current == null) {
             throw new IllegalStateException("Measure was not started so cannot be stopped");
