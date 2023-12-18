@@ -37,7 +37,7 @@ public class PowerMeasurer<M extends SensorMeasure> {
     }
 
     private PowerMeasurer() {
-        this(new LocalSampler(PowerSensorProducer.determinePowerSensor()));
+        this(new ServerSampler());
     }
 
     PowerMeasurer(Sampler sampler) {

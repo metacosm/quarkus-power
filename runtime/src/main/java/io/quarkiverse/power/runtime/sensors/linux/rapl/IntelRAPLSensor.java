@@ -96,15 +96,13 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
 
     @Override
     public void update(OngoingPowerMeasure ongoingMeasure) {
-        ongoingMeasure.startNewMeasure();
         double cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
         for (int i = 0; i < raplFiles.length; i++) {
             final var value = raplFiles[i].extractPowerMeasure();
             final var newComponentValue = computeNewComponentValue(i, value, cpuShare);
-            ongoingMeasure.setComponent(i, newComponentValue);
             lastMeasuredSensorValues[i] = newComponentValue;
         }
-        ongoingMeasure.stopMeasure();
+        ongoingMeasure.recordMeasure(lastMeasuredSensorValues);
     }
 
     @Override
