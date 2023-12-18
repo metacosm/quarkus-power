@@ -27,15 +27,14 @@ public class OngoingPowerMeasureTest {
         };
         final var measure = new OngoingPowerMeasure(metadata, 1, 500);
 
-        measure.startNewMeasure();
-        measure.setComponent(0, m1c1);
-        measure.setComponent(1, m1c2);
-        measure.stopMeasure();
+        final var components = new double[metadata.componentCardinality()];
+        components[0] = m1c1;
+        components[1] = m1c2;
+        measure.recordMeasure(components);
 
-        measure.startNewMeasure();
-        measure.setComponent(0, m2c1);
-        measure.setComponent(1, m2c2);
-        measure.stopMeasure();
+        components[0] = m2c1;
+        components[1] = m2c2;
+        measure.recordMeasure(components);
 
         assertEquals(m1c1 + m1c2 + m2c1 + m2c2, measure.total());
         assertEquals((m1c1 + m1c2 + m2c1 + m2c2) / 2, measure.average());
