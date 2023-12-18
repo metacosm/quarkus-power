@@ -23,23 +23,25 @@ public class PowerMeasurer<M extends SensorMeasure> {
     }
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private ScheduledFuture<?> scheduled;
-    private final PowerSensor<M> sensor;
-    private OngoingPowerMeasure measure;
-
+    private final Sampler sampler;
     private Consumer<PowerMeasure> completed;
     private BiConsumer<Integer, PowerMeasure> sampled;
     private Consumer<Exception> errorHandler;
-
-    private final static PowerMeasurer<? extends SensorMeasure> instance = new PowerMeasurer<>(
-            PowerSensorProducer.determinePowerSensor());
+    private static PowerMeasurer<? extends SensorMeasure> instance;
 
     public static PowerMeasurer<? extends SensorMeasure> instance() {
+        if (instance == null) {
+            instance = new PowerMeasurer<>();
+        }
         return instance;
     }
 
-    public PowerMeasurer(PowerSensor<M> sensor) {
-        this.sensor = sensor;
+    private PowerMeasurer() {
+        this(new ServerSampler());
+    }
+
+    PowerMeasurer(Sampler sampler) {
+        this.sampler = sampler;
         this.onError(null);
     }
 
@@ -64,33 +66,21 @@ public class PowerMeasurer<M extends SensorMeasure> {
     }
 
     public Optional<String> additionalSensorInfo() {
-        return Optional.ofNullable(measure).flatMap(sensor::additionalInfo);
+        //        return Optional.ofNullable(measure).flatMap(sensor::additionalInfo);
+        return Optional.empty(); // fixme
     }
 
     public boolean isRunning() {
-        return measure != null;
+        return sampler.isRunning();
     }
 
     public void start(long durationInSeconds, long frequencyInMilliseconds)
             throws Exception {
         try {
-            measure = sensor.start(durationInSeconds, frequencyInMilliseconds);
+            sampler.start(durationInSeconds, frequencyInMilliseconds);
 
             if (durationInSeconds > 0) {
                 executor.schedule(this::stop, durationInSeconds, TimeUnit.SECONDS);
-            }
-
-            scheduled = executor.scheduleAtFixedRate(this::update, 0, frequencyInMilliseconds, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            handleError(e);
-        }
-    }
-
-    private void update() {
-        try {
-            sensor.update(measure);
-            if (this.sampled != null) {
-                sampled.accept(measure.numberOfSamples(), measure);
             }
         } catch (Exception e) {
             handleError(e);
@@ -100,12 +90,7 @@ public class PowerMeasurer<M extends SensorMeasure> {
     private void handleError(Exception e) {
         errorHandler.accept(e);
         try {
-            if (scheduled != null) {
-                scheduled.cancel(true);
-            }
-            if (sensor != null) {
-                sensor.stop();
-            }
+            sampler.stop(completed);
         } catch (Exception ex) {
             // ignore shutting down exceptions
         }
@@ -114,14 +99,11 @@ public class PowerMeasurer<M extends SensorMeasure> {
     public void stop() {
         try {
             if (isRunning()) {
-                sensor.stop();
-                scheduled.cancel(true);
-                // record the result
-                final var measured = new StoppedPowerMeasure(measure);
-                // then set the measure to null to mark that we're ready for a new measure
-                measure = null;
-                // and finally, but only then, run the completion handler
-                completed.accept(measured);
+                sampler.stop(completed);
+                //                // record the result
+                //                final var measured = new StoppedPowerMeasure(measure);
+                //                // and finally, but only then, run the completion handler
+                //                completed.accept(measured);
             }
         } catch (Exception e) {
             handleError(e);
