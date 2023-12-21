@@ -58,14 +58,14 @@ public class ServerSampler implements Sampler {
     }
 
     private void update(String measureAsString) {
-        measure.startNewMeasure();
-        final var components = Arrays.stream(measureAsString.split(" ")).mapToDouble(Double::parseDouble).toArray();
-        if (Arrays.equals(new double[] { -1.0 }, components)) {
-            System.out.println("Skipping invalid measure");
-        } else {
-            measure.setComponents(components);
+        if (measureAsString != null) {
+            final var components = Arrays.stream(measureAsString.split(" ")).mapToDouble(Double::parseDouble).toArray();
+            if (Arrays.equals(new double[] { -1.0 }, components)) {
+                System.out.println("Skipping invalid measure");
+            } else {
+                measure.recordMeasure(components);
+            }
         }
-        measure.stopMeasure();
     }
 
     public void stop(Consumer<PowerMeasure> completed) {

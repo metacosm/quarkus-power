@@ -2,13 +2,13 @@ package io.quarkiverse.power.runtime;
 
 import java.lang.management.ManagementFactory;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
-
-import io.quarkiverse.power.runtime.sensors.*;
 
 public class PowerMeasurer<M extends SensorMeasure> {
     private static final OperatingSystemMXBean osBean;
@@ -100,10 +100,6 @@ public class PowerMeasurer<M extends SensorMeasure> {
         try {
             if (isRunning()) {
                 sampler.stop(completed);
-                //                // record the result
-                //                final var measured = new StoppedPowerMeasure(measure);
-                //                // and finally, but only then, run the completion handler
-                //                completed.accept(measured);
             }
         } catch (Exception e) {
             handleError(e);
