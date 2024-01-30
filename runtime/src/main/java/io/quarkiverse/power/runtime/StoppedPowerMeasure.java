@@ -1,6 +1,4 @@
-package io.quarkiverse.power.runtime.sensors;
-
-import io.quarkiverse.power.runtime.PowerMeasure;
+package io.quarkiverse.power.runtime;
 
 public class StoppedPowerMeasure extends AbstractPowerMeasure {
     private final long duration;

@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import io.quarkiverse.power.runtime.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.SensorMetadata;
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
