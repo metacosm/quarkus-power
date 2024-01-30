@@ -2,6 +2,7 @@ package io.quarkiverse.power.runtime.sensors;
 
 import java.util.Optional;
 
+import io.quarkiverse.power.runtime.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasure;
 import io.quarkiverse.power.runtime.SensorMeasure;
 

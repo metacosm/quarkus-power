@@ -1,9 +1,7 @@
-package io.quarkiverse.power.runtime.sensors;
+package io.quarkiverse.power.runtime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import io.quarkiverse.power.runtime.SensorMetadata;
 
 public class OngoingPowerMeasure extends AbstractPowerMeasure {
     private final long startedAt;
