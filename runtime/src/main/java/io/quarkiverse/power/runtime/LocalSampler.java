@@ -6,9 +6,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
-import io.quarkiverse.power.runtime.sensors.StoppedPowerMeasure;
 
 public class LocalSampler implements Sampler {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();

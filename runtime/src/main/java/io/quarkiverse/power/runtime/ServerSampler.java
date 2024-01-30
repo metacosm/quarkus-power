@@ -11,8 +11,6 @@ import jakarta.ws.rs.sse.SseEventSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.metacosm.power.SensorMetadata;
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
-import io.quarkiverse.power.runtime.sensors.StoppedPowerMeasure;
 import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
 
 public class ServerSampler implements Sampler {

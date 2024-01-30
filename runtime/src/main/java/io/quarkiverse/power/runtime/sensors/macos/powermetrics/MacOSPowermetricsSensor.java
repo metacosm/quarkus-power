@@ -5,9 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Optional;
 
+import io.quarkiverse.power.runtime.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasurer;
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 import io.quarkiverse.power.runtime.sensors.macos.AppleSiliconMeasure;
 

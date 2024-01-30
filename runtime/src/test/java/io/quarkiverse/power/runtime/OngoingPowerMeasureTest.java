@@ -1,10 +1,8 @@
-package io.quarkiverse.power.runtime.sensors;
+package io.quarkiverse.power.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
-
-import io.quarkiverse.power.runtime.SensorMetadata;
 
 public class OngoingPowerMeasureTest {
 
