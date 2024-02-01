@@ -32,6 +32,12 @@
       <artifactId>quarkus-junit5-internal</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>net.laprun.sustainability</groupId>
+      <artifactId>power-server</artifactId>
+      <version>0.0.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
