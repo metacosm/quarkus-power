@@ -3,8 +3,8 @@ package io.quarkiverse.power.runtime;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
-import io.github.metacosm.power.SensorMetadata;
 import io.smallrye.mutiny.Multi;
+import net.laprun.sustainability.power.SensorMetadata;
 
 @Path("/power")
 public interface PowerServerClient {
