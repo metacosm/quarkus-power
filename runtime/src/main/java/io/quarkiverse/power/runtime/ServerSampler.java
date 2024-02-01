@@ -1,5 +1,6 @@
 package io.quarkiverse.power.runtime;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -8,10 +9,13 @@ import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.SseEventSource;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.metacosm.power.SensorMetadata;
 import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
+import net.laprun.sustainability.power.SensorMeasure;
+import net.laprun.sustainability.power.SensorMetadata;
 
 public class ServerSampler implements Sampler {
     private final SseEventSource powerAPI;
@@ -20,14 +24,25 @@ public class ServerSampler implements Sampler {
     private io.quarkiverse.power.runtime.SensorMetadata metadata;
     private static final long pid = ProcessHandle.current().pid();
 
-    public ServerSampler() {
+    @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
+    URI powerServerURI;
+
+    public ServerSampler(URI powerServerURI) {
+        if (powerServerURI != null) {
+            this.powerServerURI = powerServerURI;
+        }
         final var client = ClientBuilder.newClient();
         client.register(new ClientJacksonMessageBodyReader(new ObjectMapper()));
-        base = client.target("http://localhost:20432/power");
+        base = client.target(this.powerServerURI.resolve("power"));
 
         final var powerForPid = base.path("{pid}").resolveTemplate("pid", pid);
         powerAPI = SseEventSource.target(powerForPid).build();
-        powerAPI.register((sseEvent) -> update(sseEvent.readData()), (e) -> System.out.println("Exception: " + e.getMessage()));
+        powerAPI.register((sseEvent) -> update(sseEvent.readData(SensorMeasure.class)),
+                (e) -> System.out.println("Exception: " + e.getMessage()));
+    }
+
+    public ServerSampler() {
+        this(null);
     }
 
     @Override
@@ -55,9 +70,9 @@ public class ServerSampler implements Sampler {
         powerAPI.open();
     }
 
-    private void update(String measureAsString) {
-        if (measureAsString != null) {
-            final var components = Arrays.stream(measureAsString.split(" ")).mapToDouble(Double::parseDouble).toArray();
+    private void update(SensorMeasure measureFromServer) {
+        if (measureFromServer != null) {
+            final var components = measureFromServer.components();
             if (Arrays.equals(new double[] { -1.0 }, components)) {
                 System.out.println("Skipping invalid measure");
             } else {

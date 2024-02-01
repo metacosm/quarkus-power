@@ -23,9 +23,9 @@
       <artifactId>quarkus-jackson</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.github.metacosm</groupId>
+      <groupId>net.laprun.sustainability</groupId>
       <artifactId>power-server-metadata</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
+      <version>0.0.1</version>
     </dependency>
       <dependency>
           <groupId>org.junit.jupiter</groupId>
@@ -35,6 +35,11 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-test-common</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
