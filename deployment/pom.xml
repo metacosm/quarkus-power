@@ -35,7 +35,6 @@
     <dependency>
       <groupId>net.laprun.sustainability</groupId>
       <artifactId>power-server</artifactId>
-      <version>0.0.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

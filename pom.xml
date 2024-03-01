@@ -27,6 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.9.1</quarkus.version>
+    <power-server.version>0.0.2</power-server.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -36,6 +37,17 @@
         <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>net.laprun.sustainability</groupId>
+        <artifactId>power-server-metadata</artifactId>
+        <version>${power-server.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.laprun.sustainability</groupId>
+        <artifactId>power-server</artifactId>
+        <version>${power-server.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
