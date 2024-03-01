@@ -27,10 +27,10 @@ public class ServerSampler implements Sampler {
     @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
     URI powerServerURI;
 
+    private static final URI DEFAULT_URI = URI.create("http://localhost:20432");
+
     public ServerSampler(URI powerServerURI) {
-        if (powerServerURI != null) {
-            this.powerServerURI = powerServerURI;
-        }
+        this.powerServerURI = powerServerURI != null ? powerServerURI : DEFAULT_URI;
         final var client = ClientBuilder.newClient();
         client.register(new ClientJacksonMessageBodyReader(new ObjectMapper()));
         base = client.target(this.powerServerURI.resolve("power"));
