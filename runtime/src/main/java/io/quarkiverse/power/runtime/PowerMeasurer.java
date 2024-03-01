@@ -40,12 +40,12 @@ public class PowerMeasurer<M extends SensorMeasure> {
         this(new ServerSampler());
     }
 
-    PowerMeasurer(Sampler sampler) {
+    public PowerMeasurer(Sampler sampler) {
         this.sampler = sampler;
         this.onError(null);
     }
 
-    public double cpuShareOfJVMProcess() {
+    public static double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
         final var cpuLoad = osBean.getCpuLoad();
         return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;

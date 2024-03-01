@@ -88,7 +88,7 @@ public class MacOSPowermetricsSensor implements PowerSensor<AppleSiliconMeasure>
                 if (!cpuDone) {
                     // look for line that contains CPU power measure
                     if (line.startsWith("CPU Power")) {
-                        final var jmxCpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
+                        final var jmxCpuShare = PowerMeasurer.cpuShareOfJVMProcess();
                         measure[cpu] = extractAttributedMeasure(line, cpuShare);
                         accumulatedCPUShareDiff += (cpuShare - jmxCpuShare);
                         cpuDone = true;
