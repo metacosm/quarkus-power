@@ -9,7 +9,7 @@
   </parent>
   <groupId>io.quarkiverse.power</groupId>
   <artifactId>quarkus-power-parent</artifactId>
-  <version>999-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Power - Parent</name>
   <modules>
