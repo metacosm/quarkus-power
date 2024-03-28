@@ -39,7 +39,7 @@ To use the extension:
    <dependency>
      <groupId>io.quarkiverse.power</groupId>
      <artifactId>quarkus-power</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>${project.version}</version>
    </dependency>
    ``` 
 4. Start your application in dev mode: `quarkus dev`
