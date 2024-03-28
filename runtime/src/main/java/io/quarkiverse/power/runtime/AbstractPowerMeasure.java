@@ -1,9 +1,6 @@
-package io.quarkiverse.power.runtime.sensors;
+package io.quarkiverse.power.runtime;
 
 import java.util.List;
-
-import io.quarkiverse.power.runtime.PowerMeasure;
-import io.quarkiverse.power.runtime.SensorMetadata;
 
 abstract class AbstractPowerMeasure implements PowerMeasure {
     private final SensorMetadata sensorMetadata;

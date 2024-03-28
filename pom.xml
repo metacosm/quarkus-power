@@ -9,13 +9,12 @@
   </parent>
   <groupId>io.quarkiverse.power</groupId>
   <artifactId>quarkus-power-parent</artifactId>
-  <version>999-SNAPSHOT</version>
+  <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Power - Parent</name>
   <modules>
     <module>deployment</module>
     <module>runtime</module>
-<!--    <module>docs</module>-->
   </modules>
   <scm>
     <connection>scm:git:git@github.com:quarkiverse/quarkus-power.git</connection>
@@ -28,6 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.9.1</quarkus.version>
+    <power-server.version>0.0.6</power-server.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -37,6 +37,17 @@
         <version>${quarkus.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>net.laprun.sustainability</groupId>
+        <artifactId>power-server-metadata</artifactId>
+        <version>${power-server.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.laprun.sustainability</groupId>
+        <artifactId>power-server</artifactId>
+        <version>${power-server.version}</version>
+        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -48,6 +59,27 @@
           <artifactId>quarkus-maven-plugin</artifactId>
           <version>${quarkus.version}</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <dependencies>
+            <dependency>
+              <groupId>me.fabriciorby</groupId>
+              <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+              <version>1.2.1</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <reportFormat>plain</reportFormat>
+            <consoleOutputReporter>
+              <disable>true</disable>
+            </consoleOutputReporter>
+            <statelessTestsetInfoReporter
+                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+              <theme>UNICODE</theme>
+            </statelessTestsetInfoReporter>
+          </configuration>
+          </plugin>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${compiler-plugin.version}</version>

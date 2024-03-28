@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.quarkiverse.power</groupId>
     <artifactId>quarkus-power-parent</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-power</artifactId>
   <name>Quarkus Power - Runtime</name>
@@ -13,6 +13,18 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jackson</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.laprun.sustainability</groupId>
+      <artifactId>power-server-metadata</artifactId>
     </dependency>
       <dependency>
           <groupId>org.junit.jupiter</groupId>
@@ -22,6 +34,11 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-test-common</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

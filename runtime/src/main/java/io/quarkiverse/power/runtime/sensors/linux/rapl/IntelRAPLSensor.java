@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import io.quarkiverse.power.runtime.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.SensorMetadata;
-import io.quarkiverse.power.runtime.sensors.OngoingPowerMeasure;
 import io.quarkiverse.power.runtime.sensors.PowerSensor;
 
 public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
@@ -96,15 +96,13 @@ public class IntelRAPLSensor implements PowerSensor<IntelRAPLMeasure> {
 
     @Override
     public void update(OngoingPowerMeasure ongoingMeasure) {
-        ongoingMeasure.startNewMeasure();
-        double cpuShare = PowerMeasurer.instance().cpuShareOfJVMProcess();
+        double cpuShare = PowerMeasurer.cpuShareOfJVMProcess();
         for (int i = 0; i < raplFiles.length; i++) {
             final var value = raplFiles[i].extractPowerMeasure();
             final var newComponentValue = computeNewComponentValue(i, value, cpuShare);
-            ongoingMeasure.setComponent(i, newComponentValue);
             lastMeasuredSensorValues[i] = newComponentValue;
         }
-        ongoingMeasure.stopMeasure();
+        ongoingMeasure.recordMeasure(lastMeasuredSensorValues);
     }
 
     @Override
