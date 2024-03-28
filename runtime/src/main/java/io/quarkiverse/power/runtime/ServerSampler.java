@@ -1,9 +1,11 @@
 package io.quarkiverse.power.runtime;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
@@ -51,23 +53,36 @@ public class ServerSampler implements Sampler {
     }
 
     public void start(long durationInSeconds, long frequencyInMilliseconds) throws Exception {
-        if (metadata == null) {
-            final var serverMetadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
-            this.metadata = new io.quarkiverse.power.runtime.SensorMetadata() {
-                @Override
-                public int indexFor(String component) {
-                    return serverMetadata.metadataFor(component).index();
-                }
+        try {
+            if (metadata == null) {
+                final var serverMetadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE)
+                        .get(SensorMetadata.class);
+                this.metadata = new io.quarkiverse.power.runtime.SensorMetadata() {
+                    @Override
+                    public int indexFor(String component) {
+                        return serverMetadata.metadataFor(component).index();
+                    }
 
-                @Override
-                public int componentCardinality() {
-                    return serverMetadata.componentCardinality();
+                    @Override
+                    public int componentCardinality() {
+                        return serverMetadata.componentCardinality();
+                    }
+                };
+            }
+
+            measure = new OngoingPowerMeasure(metadata, durationInSeconds, frequencyInMilliseconds);
+            powerAPI.open();
+        } catch (Exception e) {
+            if (e instanceof ProcessingException processingException) {
+                final var cause = processingException.getCause();
+                if (cause instanceof ConnectException connectException) {
+                    throw new RuntimeException(
+                            "Couldn't connect to power-server. Please see the instructions to set it up and run it.",
+                            connectException);
                 }
-            };
+            }
+            throw new RuntimeException(e);
         }
-
-        measure = new OngoingPowerMeasure(metadata, durationInSeconds, frequencyInMilliseconds);
-        powerAPI.open();
     }
 
     private void update(SensorMeasure measureFromServer) {
