@@ -27,7 +27,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.version>3.9.1</quarkus.version>
-    <power-server.version>0.0.6</power-server.version>
+    <power-server.version>0.0.7</power-server.version>
   </properties>
   <dependencyManagement>
     <dependencies>
