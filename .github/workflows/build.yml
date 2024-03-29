@@ -63,4 +63,4 @@ jobs:
           native-image-job-reports: 'true'
 
       - name: Build with Maven (Native)
-        run: mvn -B install -Dnative -Dquarkus.native.container-build -Dnative.surefire.skip
+        run: mvn -B package -Dnative -Dnative.surefire.skip
