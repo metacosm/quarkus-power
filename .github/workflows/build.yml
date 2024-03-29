@@ -23,7 +23,7 @@ on:
       - '.all-contributorsrc'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: '${{ github.workflow }}-${{ github.ref }}'
   cancel-in-progress: true
 
 defaults:
@@ -36,8 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [windows-latest, macos-latest, ubuntu-latest]
-        os: [macos-latest]
+        os: [macos-latest, macos-14, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Prepare git
