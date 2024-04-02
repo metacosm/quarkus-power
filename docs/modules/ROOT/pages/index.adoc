@@ -6,14 +6,14 @@ TIP: Describe what the extension does here.
 
 == Installation
 
-If you want to use this extension, you need to add the `io.quarkiverse.power:quarkus-power` extension first to your build file.
+If you want to use this extension, you need to add the `net.laprun.sustainability:quarkus-power` extension first to your build file.
 
 For instance, with Maven, add the following dependency to your POM file:
 
 [source,xml,subs=attributes+]
 ----
 <dependency>
-    <groupId>io.quarkiverse.power</groupId>
+    <groupId>net.laprun.sustainability</groupId>
     <artifactId>quarkus-power</artifactId>
     <version>{project-version}</version>
 </dependency>
