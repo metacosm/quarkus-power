@@ -1,9 +1,9 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import net.laprun.sustainability.power.SensorMetadata;
-
 import java.util.List;
 import java.util.stream.IntStream;
+
+import net.laprun.sustainability.power.SensorMetadata;
 
 public interface PowerMeasure {
     int numberOfSamples();

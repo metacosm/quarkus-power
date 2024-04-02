@@ -1,20 +1,23 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
+import java.net.ConnectException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.function.Consumer;
+
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.SseEventSource;
-import net.laprun.sustainability.power.SensorMeasure;
-import net.laprun.sustainability.power.SensorMetadata;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.net.ConnectException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.function.Consumer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
+import net.laprun.sustainability.power.SensorMeasure;
+import net.laprun.sustainability.power.SensorMetadata;
 
 public class ServerSampler implements Sampler {
     private final SseEventSource powerAPI;

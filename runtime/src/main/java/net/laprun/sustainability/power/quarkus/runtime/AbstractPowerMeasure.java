@@ -1,8 +1,8 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import net.laprun.sustainability.power.SensorMetadata;
-
 import java.util.List;
+
+import net.laprun.sustainability.power.SensorMetadata;
 
 abstract class AbstractPowerMeasure implements PowerMeasure {
     private final SensorMetadata sensorMetadata;

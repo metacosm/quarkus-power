@@ -1,7 +1,5 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import com.sun.management.OperatingSystemMXBean;
-
 import java.lang.management.ManagementFactory;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -9,6 +7,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import com.sun.management.OperatingSystemMXBean;
 
 public class PowerMeasurer {
     private static final OperatingSystemMXBean osBean;

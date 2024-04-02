@@ -1,16 +1,17 @@
 package net.laprun.sustainability.power.quarkus.deployment;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.net.URI;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import net.laprun.sustainability.power.PowerResource;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 import net.laprun.sustainability.power.quarkus.runtime.ServerSampler;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.net.URI;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PowerMeasurerTest {
     @TestHTTPResource

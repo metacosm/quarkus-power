@@ -1,9 +1,10 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import net.laprun.sustainability.power.SensorMetadata;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import net.laprun.sustainability.power.SensorMetadata;
 
 public class OngoingPowerMeasureTest {
 

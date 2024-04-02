@@ -1,9 +1,9 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import net.laprun.sustainability.power.SensorMetadata;
-
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import net.laprun.sustainability.power.SensorMetadata;
 
 public class OngoingPowerMeasure extends AbstractPowerMeasure {
     private final long startedAt;
