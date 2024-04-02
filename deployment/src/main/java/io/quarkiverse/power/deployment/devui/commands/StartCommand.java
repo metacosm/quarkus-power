@@ -41,7 +41,6 @@ public class StartCommand extends QuarkusCommand {
                     sensor.start(30, 1000);
                     sensor.onError(e -> {
                         commandInvocation.println("An error occurred: " + e.getMessage());
-                        e.printStackTrace();
                     });
                     sensor.onCompleted((m) -> {
                         baseline = m;

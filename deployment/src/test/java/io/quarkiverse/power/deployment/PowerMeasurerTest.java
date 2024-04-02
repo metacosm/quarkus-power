@@ -25,8 +25,6 @@ public class PowerMeasurerTest {
         final var measurer = new PowerMeasurer(new ServerSampler(uri));
 
         measurer.start(1, 100);
-        measurer.onCompleted(measure -> {
-            assertEquals(10, measure.numberOfSamples());
-        });
+        measurer.onCompleted(measure -> assertEquals(10, measure.numberOfSamples()));
     }
 }

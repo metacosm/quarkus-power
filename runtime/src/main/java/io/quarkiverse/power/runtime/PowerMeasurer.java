@@ -45,6 +45,7 @@ public class PowerMeasurer {
         this.onError(null);
     }
 
+    @SuppressWarnings("unused")
     public static double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
         final var cpuLoad = osBean.getCpuLoad();
@@ -74,8 +75,7 @@ public class PowerMeasurer {
         return sampler.isRunning();
     }
 
-    public void start(long durationInSeconds, long frequencyInMilliseconds)
-            throws Exception {
+    public void start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             sampler.start(durationInSeconds, frequencyInMilliseconds);
 
