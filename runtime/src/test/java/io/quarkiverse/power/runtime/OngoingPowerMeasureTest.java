@@ -1,8 +1,9 @@
 package io.quarkiverse.power.runtime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import net.laprun.sustainability.power.SensorMetadata;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OngoingPowerMeasureTest {
 
@@ -12,11 +13,7 @@ public class OngoingPowerMeasureTest {
         final var m1c2 = 12.0;
         final var m2c1 = 8.0;
         final var m2c2 = 17.0;
-        final var metadata = new SensorMetadata() {
-            @Override
-            public int indexFor(String component) {
-                throw new UnsupportedOperationException("not needed for testing");
-            }
+        final var metadata = new SensorMetadata(null, null) {
 
             @Override
             public int componentCardinality() {

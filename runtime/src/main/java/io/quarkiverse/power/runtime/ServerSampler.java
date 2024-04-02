@@ -1,29 +1,26 @@
 package io.quarkiverse.power.runtime;
 
-import java.net.ConnectException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.function.Consumer;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.SseEventSource;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
 import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import java.net.ConnectException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.function.Consumer;
 
 public class ServerSampler implements Sampler {
     private final SseEventSource powerAPI;
     private final WebTarget base;
     private OngoingPowerMeasure measure;
-    private io.quarkiverse.power.runtime.SensorMetadata metadata;
+    private SensorMetadata metadata;
     private static final long pid = ProcessHandle.current().pid();
 
     @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
@@ -55,19 +52,7 @@ public class ServerSampler implements Sampler {
     public void start(long durationInSeconds, long frequencyInMilliseconds) throws Exception {
         try {
             if (metadata == null) {
-                final var serverMetadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE)
-                        .get(SensorMetadata.class);
-                this.metadata = new io.quarkiverse.power.runtime.SensorMetadata() {
-                    @Override
-                    public int indexFor(String component) {
-                        return serverMetadata.metadataFor(component).index();
-                    }
-
-                    @Override
-                    public int componentCardinality() {
-                        return serverMetadata.componentCardinality();
-                    }
-                };
+                this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
             }
 
             measure = new OngoingPowerMeasure(metadata, durationInSeconds, frequencyInMilliseconds);

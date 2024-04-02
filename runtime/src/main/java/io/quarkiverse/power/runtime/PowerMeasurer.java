@@ -1,5 +1,7 @@
 package io.quarkiverse.power.runtime;
 
+import com.sun.management.OperatingSystemMXBean;
+
 import java.lang.management.ManagementFactory;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -8,9 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import com.sun.management.OperatingSystemMXBean;
-
-public class PowerMeasurer<M extends SensorMeasure> {
+public class PowerMeasurer {
     private static final OperatingSystemMXBean osBean;
 
     static {
@@ -27,11 +27,11 @@ public class PowerMeasurer<M extends SensorMeasure> {
     private Consumer<PowerMeasure> completed;
     private BiConsumer<Integer, PowerMeasure> sampled;
     private Consumer<Exception> errorHandler;
-    private static PowerMeasurer<? extends SensorMeasure> instance;
+    private static PowerMeasurer instance;
 
-    public static PowerMeasurer<? extends SensorMeasure> instance() {
+    public static PowerMeasurer instance() {
         if (instance == null) {
-            instance = new PowerMeasurer<>();
+            instance = new PowerMeasurer();
         }
         return instance;
     }
