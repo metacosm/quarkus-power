@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.quarkiverse.power</groupId>
+        <groupId>net.laprun.sustainability</groupId>
         <artifactId>quarkus-power-parent</artifactId>
-        <version>999-SNAPSHOT</version>
+        <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -14,9 +14,9 @@
     <name>Quarkus Power - Documentation</name>
 
     <dependencies>
-        <!-- Make sure the doc is built after the other artifacts -->
+        <!-- Make sure docs are built after the other artifacts -->
         <dependency>
-            <groupId>io.quarkiverse.power</groupId>
+            <groupId>net.laprun.sustainability</groupId>
             <artifactId>quarkus-power-deployment</artifactId>
             <version>${project.version}</version>
         </dependency>
