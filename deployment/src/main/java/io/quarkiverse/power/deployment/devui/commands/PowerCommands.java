@@ -2,7 +2,6 @@ package io.quarkiverse.power.deployment.devui.commands;
 
 import io.quarkiverse.power.runtime.PowerMeasurer;
 import org.aesh.command.Command;
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommand;
 import org.aesh.command.GroupCommandDefinition;
@@ -25,7 +24,7 @@ public class PowerCommands implements GroupCommand {
     }
 
     @Override
-    public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
+    public CommandResult execute(CommandInvocation commandInvocation) {
         commandInvocation.println(commandInvocation.getHelpInfo());
         return CommandResult.SUCCESS;
     }

@@ -49,7 +49,7 @@ public class ServerSampler implements Sampler {
         return measure != null;
     }
 
-    public void start(long durationInSeconds, long frequencyInMilliseconds) throws Exception {
+    public void start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             if (metadata == null) {
                 this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
