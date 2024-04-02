@@ -1,17 +1,16 @@
 package io.quarkiverse.power.deployment;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.net.URI;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
 import io.quarkiverse.power.runtime.PowerMeasurer;
 import io.quarkiverse.power.runtime.ServerSampler;
 import io.quarkus.test.QuarkusUnitTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import net.laprun.sustainability.power.PowerResource;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import java.net.URI;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PowerMeasurerTest {
     @TestHTTPResource
@@ -23,7 +22,7 @@ public class PowerMeasurerTest {
 
     @Test
     void startShouldAccumulateOverSpecifiedDurationAndStop() throws Exception {
-        final var measurer = new PowerMeasurer<>(new ServerSampler(uri));
+        final var measurer = new PowerMeasurer(new ServerSampler(uri));
 
         measurer.start(1, 100);
         measurer.onCompleted(measure -> {

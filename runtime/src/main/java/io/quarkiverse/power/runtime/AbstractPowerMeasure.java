@@ -1,5 +1,7 @@
 package io.quarkiverse.power.runtime;
 
+import net.laprun.sustainability.power.SensorMetadata;
+
 import java.util.List;
 
 abstract class AbstractPowerMeasure implements PowerMeasure {

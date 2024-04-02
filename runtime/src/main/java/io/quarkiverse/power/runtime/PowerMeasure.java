@@ -1,9 +1,11 @@
 package io.quarkiverse.power.runtime;
 
+import net.laprun.sustainability.power.SensorMetadata;
+
 import java.util.List;
 import java.util.stream.IntStream;
 
-public interface PowerMeasure extends SensorMeasure {
+public interface PowerMeasure {
     int numberOfSamples();
 
     long duration();
@@ -11,6 +13,10 @@ public interface PowerMeasure extends SensorMeasure {
     default double average() {
         return total() / numberOfSamples();
     }
+
+    double total();
+
+    SensorMetadata metadata();
 
     double[] averagesPerComponent();
 
