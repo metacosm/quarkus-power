@@ -1,13 +1,14 @@
 package net.laprun.sustainability.power.quarkus.deployment.devui.commands;
 
-import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
+import java.util.List;
+
 import org.aesh.command.Command;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommand;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.invocation.CommandInvocation;
 
-import java.util.List;
+import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 @GroupCommandDefinition(name = "power", description = "Power consumption commands", generateHelp = true)
 @SuppressWarnings("rawtypes")
