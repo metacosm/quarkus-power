@@ -25,7 +25,7 @@ To use the extension:
    your application:
     ```xml
    <dependency>
-     <groupId>io.quarkiverse.power</groupId>
+     <groupId>net.laprun.sustainability.power.quarkus</groupId>
      <artifactId>quarkus-power</artifactId>
     <version>${project.version}</version>
    </dependency>

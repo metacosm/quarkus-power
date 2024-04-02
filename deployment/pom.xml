@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.quarkiverse.power</groupId>
+    <groupId>net.laprun.sustainability</groupId>
     <artifactId>quarkus-power-parent</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
@@ -23,7 +23,7 @@
       <artifactId>quarkus-rest-jackson-deployment</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkiverse.power</groupId>
+      <groupId>net.laprun.sustainability</groupId>
       <artifactId>quarkus-power</artifactId>
       <version>${project.version}</version>
     </dependency>
