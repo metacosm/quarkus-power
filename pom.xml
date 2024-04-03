@@ -1,17 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>io.quarkiverse</groupId>
-    <artifactId>quarkiverse-parent</artifactId>
-    <version>16</version>
-  </parent>
   <groupId>net.laprun.sustainability</groupId>
   <artifactId>quarkus-power-parent</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Power - Parent</name>
+  <description>A Quarkus extension to help measure power consumption of applications</description>
+  <url>https://github.com/metacosm/quarkus-power</url>
+  <inceptionYear>2023</inceptionYear>
+  <licenses>
+    <license>
+      <name>Apache 2 License</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.html</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Christophe Laprun</name>
+      <email>metacosm@gmail.com</email>
+      <roles>
+        <role>author</role>
+      </roles>
+    </developer>
+  </developers>
+
   <modules>
     <module>deployment</module>
     <module>runtime</module>
@@ -19,6 +32,7 @@
   <scm>
     <connection>scm:git:git@github.com:quarkiverse/quarkus-power.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-power.git</developerConnection>
+    <tag>HEAD</tag>
     <url>https://github.com/quarkiverse/quarkus-power</url>
   </scm>
   <properties>
@@ -26,8 +40,26 @@
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
     <quarkus.version>3.9.2</quarkus.version>
     <power-server.version>0.0.7</power-server.version>
+
+    <surefire-plugin.version>3.2.5</surefire-plugin.version>
+    <formatter-plugin.version>2.23.0</formatter-plugin.version>
+    <impsort-plugin.version>1.9.0</impsort-plugin.version>
+    <maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
+    <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+    <maven-gpg-plugin.version>3.2.2</maven-gpg-plugin.version>
+    <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
+    <central-maven-publishing-plugin.version>0.4.0</central-maven-publishing-plugin.version>
+    <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
+    <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
+    <buildnumber-maven-plugin.version>3.2.0</buildnumber-maven-plugin.version>
+    <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+    <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
+    <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+    <jreleaser.version>1.11.0</jreleaser.version>
+    <spotless.version>2.43.0</spotless.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -52,45 +84,114 @@
     </dependencies>
   </dependencyManagement>
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>io.quarkus</groupId>
-          <artifactId>quarkus-maven-plugin</artifactId>
-          <version>${quarkus.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <dependencies>
-            <dependency>
-              <groupId>me.fabriciorby</groupId>
-              <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-              <version>1.2.1</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <reportFormat>plain</reportFormat>
-            <consoleOutputReporter>
-              <disable>true</disable>
-            </consoleOutputReporter>
-            <statelessTestsetInfoReporter
-                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
-              <theme>UNICODE</theme>
-            </statelessTestsetInfoReporter>
-          </configuration>
-          </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${compiler-plugin.version}</version>
-          <configuration>
-            <compilerArgs>
-              <arg>-parameters</arg>
-            </compilerArgs>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${maven-deploy-plugin.version}</version>
+      </plugin>
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler-plugin.version}</version>
+        <configuration>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <reportFormat>plain</reportFormat>
+          <consoleOutputReporter>
+            <disable>true</disable>
+          </consoleOutputReporter>
+          <statelessTestsetInfoReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoTreeReporter">
+            <theme>UNICODE</theme>
+          </statelessTestsetInfoReporter>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <!--            <quarkus.log.level>DEBUG</quarkus.log.level>-->
+            <maven.home>${maven.home}</maven.home>
+          </systemPropertyVariables>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>me.fabriciorby</groupId>
+            <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
+            <version>1.2.1</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <systemPropertyVariables>
+                <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <configuration>
+          <pom>
+            <includes>
+              <include>pom.xml</include>
+              <include>./**/pom.xml</include>
+            </includes>
+            <sortPom>
+              <expandEmptyElements>false</expandEmptyElements>
+            </sortPom>
+          </pom>
+          <java>
+            <eclipse>
+              <file>contributing/eclipse-format.xml</file>
+            </eclipse>
+            <importOrder>
+              <file>contributing/eclipse.importorder</file>
+            </importOrder>
+            <removeUnusedImports/>
+          </java>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>apply</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
   <profiles>
     <profile>
@@ -115,6 +216,152 @@
       <modules>
         <module>integration-tests</module>
       </modules>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- Set properties containing the scm revision -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>buildnumber-maven-plugin</artifactId>
+            <version>${buildnumber-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>get-scm-revision</id>
+                <goals>
+                  <goal>create</goal>
+                </goals>
+                <phase>initialize</phase>
+                <configuration>
+                  <doCheck>false</doCheck>
+                  <doUpdate>false</doUpdate>
+                  <revisionOnScmFailure>UNKNOWN</revisionOnScmFailure>
+                  <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>${maven-jar-plugin.version}</version>
+            <configuration>
+              <archive>
+                <index>true</index>
+                <manifest>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                </manifest>
+                <manifestEntries>
+                  <Implementation-URL>${project.url}</Implementation-URL>
+                  <Java-Version>${java.version}</Java-Version>
+                  <Java-Vendor>${java.vendor}</Java-Vendor>
+                  <Os-Name>${os.name}</Os-Name>
+                  <Os-Arch>${os.arch}</Os-Arch>
+                  <Os-Version>${os.version}</Os-Version>
+                  <Scm-Url>${project.scm.url}</Scm-Url>
+                  <Scm-Connection>${project.scm.connection}</Scm-Connection>
+                  <Scm-Revision>${buildNumber}</Scm-Revision>
+                </manifestEntries>
+              </archive>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>${maven-javadoc-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>${maven-source-plugin.version}</version>
+            <configuration>
+              <archive>
+                <index>true</index>
+                <manifest>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                </manifest>
+                <manifestEntries>
+                  <Implementation-URL>${project.url}</Implementation-URL>
+                  <Java-Version>${java.version}</Java-Version>
+                  <Java-Vendor>${java.vendor}</Java-Vendor>
+                  <Os-Name>${os.name}</Os-Name>
+                  <Os-Arch>${os.arch}</Os-Arch>
+                  <Os-Version>${os.version}</Os-Version>
+                  <Scm-Url>${project.scm.url}</Scm-Url>
+                  <Scm-Connection>${project.scm.connection}</Scm-Connection>
+                  <Scm-Revision>${buildNumber}</Scm-Revision>
+                </manifestEntries>
+              </archive>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>${maven-gpg-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>${maven-release-plugin.version}</version>
+            <configuration>
+              <preparationGoals>clean install</preparationGoals>
+              <autoVersionSubmodules>true</autoVersionSubmodules>
+              <useReleaseProfile>false</useReleaseProfile>
+              <releaseProfiles>release</releaseProfiles>
+              <goals>deploy</goals>
+              <tagNameFormat>@{project.version}</tagNameFormat>
+              <pushChanges>false</pushChanges>
+              <localCheckout>true</localCheckout>
+              <remoteTagging>false</remoteTagging>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>${central-maven-publishing-plugin.version}</version>
+            <extensions>true</extensions>
+            <configuration>
+              <autoPublish>true</autoPublish>
+              <tokenAuth>true</tokenAuth>
+              <excludeArtifacts>build-tools</excludeArtifacts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>
