@@ -1,6 +1,6 @@
 # Quarkus Power
 
-[![Version](https://img.shields.io/maven-central/v/io.quarkiverse.power/quarkus-power?logo=apache-maven&style=flat-square)](https://search.maven.org/artifact/io.quarkiverse.power/quarkus-power)
+[![Version](https://img.shields.io/maven-central/v/net.laprun.sustainability/quarkus-power?logo=apache-maven&style=flat-square)](https://search.maven.org/artifact/net.laprun.sustainability/quarkus-power)
 
 This extension is an experiment to measure and display the power consumption of your application as it runs in Dev mode.
 Only Linux/amd64 and macOS (amd64/apple silicon) are supported at the moment. See below for platform-specific
@@ -25,7 +25,7 @@ To use the extension:
    your application:
     ```xml
    <dependency>
-     <groupId>net.laprun.sustainability.power.quarkus</groupId>
+     <groupId>net.laprun.sustainability</groupId>
      <artifactId>quarkus-power</artifactId>
     <version>${project.version}</version>
    </dependency>
