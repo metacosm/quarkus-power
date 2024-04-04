@@ -49,14 +49,4 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn -B clean install -Dno-format
-
-      - uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'true'
-
-      - name: Build with Maven (Native)
-        run: mvn -B package -Dnative -Dnative.surefire.skip
+        run: mvn -B clean install -Dno-format -Dquarkus.log.console.level=DEBUG
