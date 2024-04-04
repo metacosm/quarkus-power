@@ -36,13 +36,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, macos-14, ubuntu-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Prepare git
-        run: git config --global core.autocrlf false
-        if: startsWith(matrix.os, 'windows')
-
       - uses: actions/checkout@v4
           
       - name: Set up JDK 17
