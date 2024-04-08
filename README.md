@@ -17,6 +17,15 @@ the [release page](https://github.com/metacosm/power-server/releases/). Once dow
 the archive and navigate to the `bin` directory to find the `power-server` binary that you can then run
 using: `sudo power-server`.
 
+Note:
+On macOS, you will most likely get a dialog telling you that the application cannot be opened because Apple cannot
+verify it. We're looking into addressing this problem but, in the mean time, you can open System Settings then navigate
+to the Privacy & Security section. Once there, if you scroll down to the Security sub-section, if you happen to perform
+these actions not too long after seeing the error dialog, there should be a spot where you can allow the application to
+run anyway. If you click on Allow, the next time you run `power-server`, you should get yet another message, which
+should now let you open the application. Once this is done, you shouldn't need to perform these steps again (until the
+next time you download an update, that is).
+
 ## Usage
 
 To use the extension:
