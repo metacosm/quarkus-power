@@ -13,14 +13,6 @@ abstract class AbstractPowerMeasure implements PowerMeasure {
         this.measures = measures;
     }
 
-    public static double sumOfComponents(double[] recorded) {
-        var componentSum = 0.0;
-        for (double value : recorded) {
-            componentSum += value;
-        }
-        return componentSum;
-    }
-
     @Override
     public List<double[]> measures() {
         return measures;
@@ -33,5 +25,9 @@ abstract class AbstractPowerMeasure implements PowerMeasure {
 
     public int numberOfSamples() {
         return measures.size();
+    }
+
+    double[] getComponentData(int componentIndex) {
+        return measures.parallelStream().mapToDouble(measure -> measure[componentIndex]).toArray();
     }
 }

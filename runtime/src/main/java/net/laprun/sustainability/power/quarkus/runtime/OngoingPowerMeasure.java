@@ -1,7 +1,6 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import net.laprun.sustainability.power.SensorMetadata;
 
@@ -10,25 +9,29 @@ public class OngoingPowerMeasure extends AbstractPowerMeasure {
     private double minTotal = Double.MAX_VALUE;
     private double maxTotal;
     private final double[] totals;
+    private final double[] averages;
 
     public OngoingPowerMeasure(SensorMetadata sensorMetadata, long duration, long frequency) {
         super(sensorMetadata, new ArrayList<>((int) (duration / frequency)));
         startedAt = System.currentTimeMillis();
         final var numComponents = metadata().componentCardinality();
         totals = new double[numComponents];
+        averages = new double[numComponents];
     }
 
     public void recordMeasure(double[] components) {
         final var recorded = new double[components.length];
         System.arraycopy(components, 0, recorded, 0, components.length);
+        final var previousSize = numberOfSamples();
         measures().add(recorded);
 
-        for (int i = 0; i < components.length; i++) {
-            totals[i] += components[i];
+        for (int i = 0; i < recorded.length; i++) {
+            totals[i] += recorded[i];
+            averages[i] = averages[i] == 0 ? recorded[i] : (previousSize * averages[i] + recorded[i]) / numberOfSamples();
         }
 
         // record min / max totals
-        final var recordedTotal = sumOfComponents(recorded);
+        final var recordedTotal = PowerMeasure.sumOfComponents(recorded);
         if (recordedTotal < minTotal) {
             minTotal = recordedTotal;
         }
@@ -39,7 +42,7 @@ public class OngoingPowerMeasure extends AbstractPowerMeasure {
 
     @Override
     public double total() {
-        return sumOfComponents(totals);
+        return PowerMeasure.sumOfComponents(totals);
     }
 
     public long duration() {
@@ -58,6 +61,6 @@ public class OngoingPowerMeasure extends AbstractPowerMeasure {
 
     @Override
     public double[] averagesPerComponent() {
-        return Arrays.stream(totals).map(total -> total / numberOfSamples()).toArray();
+        return averages;
     }
 }
