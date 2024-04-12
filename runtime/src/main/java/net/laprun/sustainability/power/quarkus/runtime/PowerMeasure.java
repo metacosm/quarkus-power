@@ -1,5 +1,6 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -24,31 +25,62 @@ public interface PowerMeasure {
 
     double maxMeasuredTotal();
 
-    default double standardDeviation() {
+    static double sumOfComponents(double[] recorded) {
+        var componentSum = 0.0;
+        for (double value : recorded) {
+            componentSum += value;
+        }
+        return componentSum;
+    }
+
+    default StdDev standardDeviations() {
         final var cardinality = metadata().componentCardinality();
+        final var stdDevs = new double[cardinality];
+        final var aggregate = new double[1];
         final var samples = numberOfSamples() - 1; // unbiased so we remove one sample
+        final var sqrdAverages = Arrays.stream(averagesPerComponent()).map(m -> m * m).toArray();
+        final var sqrdAverage = average() * average();
         // need to compute the average of variances then square root that to get the "aggregate" standard deviation, see: https://stats.stackexchange.com/a/26647
         // "vectorize" computation of variances: compute the variance for each component in parallel
-        final var componentVarianceAverage = IntStream.range(0, cardinality).parallel()
+        IntStream.range(0, cardinality).parallel()
                 // compute variances for each component of the measure
-                .mapToDouble(component -> {
-                    final var squaredDifferenceSum = measures().stream().parallel()
-                            .mapToDouble(m -> Math.pow(m[component] - averagesPerComponent()[component], 2))
+                .forEach(component -> {
+                    final var sumOfSquares = measures().stream().parallel()
+                            .peek(m -> {
+                                // compute the std dev for total measure
+                                final var total = sumOfComponents(m);
+                                aggregate[0] += total * total;
+                            })
+                            .mapToDouble(m -> m[component] * m[component])
                             .sum();
-                    return squaredDifferenceSum / samples;
-                })
-                .average()
-                .orElse(0.0);
-        return Math.sqrt(componentVarianceAverage);
+                    stdDevs[component] = stdDev(sumOfSquares, sqrdAverages[component], samples);
+                    aggregate[0] = stdDev(aggregate[0], sqrdAverage, samples);
+                });
+        return new StdDev(aggregate[0], stdDevs);
+    }
+
+    private static double stdDev(double sumOfSquares, double squaredAvg, int samples) {
+        return Math.sqrt((sumOfSquares / samples) - (((samples + 1) * squaredAvg) / samples));
+    }
+
+    /**
+     * Records the standard deviations for the aggregated energy comsumption value (as returned by {@link #total()}) and per
+     * component
+     * 
+     * @param aggregate
+     * @param perComponent
+     */
+    record StdDev(double aggregate, double[] perComponent) {
     }
 
     static String asString(PowerMeasure measure) {
         final var durationInSeconds = measure.duration() / 1000;
         final var samples = measure.numberOfSamples();
         final var measuredMilliWatts = measure.total();
+        final var stdDevs = measure.standardDeviations();
         return String.format("%s / avg: %s / std dev: %.3f [min: %.3f, max: %.3f] (%ds, %s samples)",
                 readableWithUnit(measuredMilliWatts),
-                readableWithUnit(measure.average()), measure.standardDeviation(), measure.minMeasuredTotal(),
+                readableWithUnit(measure.average()), stdDevs.aggregate, measure.minMeasuredTotal(),
                 measure.maxMeasuredTotal(), durationInSeconds,
                 samples);
     }
