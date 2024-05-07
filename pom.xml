@@ -30,10 +30,10 @@
     <module>runtime</module>
   </modules>
   <scm>
-    <connection>scm:git:git@github.com:quarkiverse/quarkus-power.git</connection>
-    <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-power.git</developerConnection>
+    <connection>scm:git:git@github.com:metacosm/quarkus-power.git</connection>
+    <developerConnection>scm:git:git@github.com:metacosm/quarkus-power.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/quarkiverse/quarkus-power</url>
+    <url>https://github.com/metacosm/quarkus-power</url>
   </scm>
   <properties>
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
