@@ -5,7 +5,6 @@ metadata:
     - power
     - sustainability
     - carbon
-  guide: https://quarkiverse.github.io/quarkiverse-docs/power/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
   categories:
     - "sustainability"
     - "power consumption"
