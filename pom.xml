@@ -47,7 +47,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <quarkus.version>3.12.2</quarkus.version>
-    <power-server.version>0.0.7</power-server.version>
+    <power-server.version>0.0.10</power-server.version>
 
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.3.0</maven-surefire-plugin.version>
@@ -86,6 +86,11 @@
       <dependency>
         <groupId>net.laprun.sustainability</groupId>
         <artifactId>power-server-metadata</artifactId>
+        <version>${power-server.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.laprun.sustainability</groupId>
+        <artifactId>power-server-measure</artifactId>
         <version>${power-server.version}</version>
       </dependency>
       <dependency>

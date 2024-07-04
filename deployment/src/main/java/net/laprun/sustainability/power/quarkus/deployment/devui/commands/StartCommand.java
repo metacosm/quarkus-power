@@ -1,12 +1,12 @@
 package net.laprun.sustainability.power.quarkus.deployment.devui.commands;
 
+import net.laprun.sustainability.power.measure.PowerMeasure;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
 import io.quarkus.deployment.console.QuarkusCommand;
-import net.laprun.sustainability.power.quarkus.runtime.PowerMeasure;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")

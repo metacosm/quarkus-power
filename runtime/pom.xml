@@ -18,12 +18,12 @@
       <artifactId>quarkus-rest-client-jackson</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jackson</artifactId>
+      <groupId>net.laprun.sustainability</groupId>
+      <artifactId>power-server-metadata</artifactId>
     </dependency>
     <dependency>
       <groupId>net.laprun.sustainability</groupId>
-      <artifactId>power-server-metadata</artifactId>
+      <artifactId>power-server-measure</artifactId>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
