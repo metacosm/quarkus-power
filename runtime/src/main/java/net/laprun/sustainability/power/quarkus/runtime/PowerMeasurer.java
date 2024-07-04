@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
+import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public class PowerMeasurer {
     private static final OperatingSystemMXBean osBean;
