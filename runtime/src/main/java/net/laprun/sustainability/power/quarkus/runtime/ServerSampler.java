@@ -4,7 +4,6 @@ import java.net.ConnectException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import jakarta.ws.rs.ProcessingException;
@@ -33,7 +32,6 @@ public class ServerSampler implements Sampler {
     private static final long pid = ProcessHandle.current().pid();
     private Consumer<PowerMeasure> completed;
     private Consumer<Throwable> errorHandler;
-    private BiConsumer<Integer, PowerMeasure> sampled;
 
     @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
     URI powerServerURI;
