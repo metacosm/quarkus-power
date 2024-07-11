@@ -5,6 +5,7 @@ on:
     types: [ closed ]
     paths:
       - '.github/project.yml'
+  workflow_dispatch:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
@@ -33,7 +34,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 21
           cache: 'maven'
           server-id: central
           server-username: MAVEN_USERNAME
