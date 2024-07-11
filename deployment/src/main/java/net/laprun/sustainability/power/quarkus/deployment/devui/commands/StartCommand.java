@@ -1,12 +1,12 @@
 package net.laprun.sustainability.power.quarkus.deployment.devui.commands;
 
-import net.laprun.sustainability.power.measure.PowerMeasure;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
 import io.quarkus.deployment.console.QuarkusCommand;
+import net.laprun.sustainability.power.measure.PowerMeasure;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")
@@ -39,24 +39,12 @@ public class StartCommand extends QuarkusCommand {
                 if (baseline == null) {
                     commandInvocation.println("Establishing baseline for 30s, please do not use your application until done.");
                     commandInvocation.println("Power measurement will start as configured after this initial measure is done.");
-                    sensor.start(30, 1000);
-                    sensor.onError(e -> commandInvocation.println("An error occurred: " + e.getMessage()));
-                    sensor.onCompleted((m) -> {
-                        baseline = m;
-                        outputConsumptionSinceStarted(baseline, commandInvocation, true);
-                        commandInvocation.println("Baseline established! You can now interact with your application normally.");
-
-                        try {
-                            sensor.start(duration, frequency);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        sensor.onCompleted(
-                                (finished) -> outputConsumptionSinceStarted(finished, commandInvocation, false));
-                    });
+                    sensor.withCompletedHandler((m) -> establishBaseline(commandInvocation, m))
+                            .withErrorHandler(e -> commandInvocation.println("An error occurred: " + e.getMessage()))
+                            .start(30, 1000);
                 } else {
-                    sensor.start(duration, frequency);
-                    sensor.onCompleted((m) -> outputConsumptionSinceStarted(m, commandInvocation, false));
+                    sensor.withCompletedHandler((m) -> outputConsumptionSinceStarted(m, commandInvocation, false))
+                            .start(duration, frequency);
                 }
 
             } else {
@@ -69,11 +57,24 @@ public class StartCommand extends QuarkusCommand {
         return CommandResult.SUCCESS;
     }
 
+    private void establishBaseline(CommandInvocation commandInvocation, PowerMeasure m) {
+        baseline = m;
+        outputConsumptionSinceStarted(baseline, commandInvocation, true);
+        commandInvocation
+                .println("Baseline established! You can now interact with your application normally.");
+        try {
+            sensor.start(duration, frequency);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        sensor.withCompletedHandler(
+                (finished) -> outputConsumptionSinceStarted(finished, commandInvocation, false));
+    }
+
     private void outputConsumptionSinceStarted(PowerMeasure measure, CommandInvocation out, boolean isBaseline) {
         final var title = isBaseline ? "\nBaseline => " : "\nMeasured => ";
         out.println(title + PowerMeasure.asString(measure));
         if (!isBaseline) {
-            sensor.additionalSensorInfo().ifPresent(out::println);
             out.println("Baseline => " + PowerMeasure.asString(baseline));
             out.println("Average ∆ => " + PowerMeasure.readableWithUnit(measure.average() - baseline.average()));
         }

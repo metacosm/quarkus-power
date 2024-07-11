@@ -18,7 +18,7 @@ public class StopCommand extends QuarkusCommand {
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) {
-        sensor.onError(e -> commandInvocation.println("An error occurred: " + e.getMessage()));
+        sensor.withErrorHandler(e -> commandInvocation.println("An error occurred: " + e.getMessage()));
         if (sensor.isRunning()) {
             sensor.stop();
         } else {

@@ -8,7 +8,15 @@ public interface Sampler {
 
     boolean isRunning();
 
-    void start(long durationInSeconds, long frequencyInMilliseconds) throws Exception;
+    void start(long durationInSeconds, long frequencyInMilliseconds);
 
-    void stop(Consumer<PowerMeasure> completed);
+    void stop();
+
+    void stopOnError(Throwable e);
+
+    @SuppressWarnings("UnusedReturnValue")
+    Sampler withCompletedHandler(Consumer<PowerMeasure> completed);
+
+    @SuppressWarnings("UnusedReturnValue")
+    Sampler withErrorHandler(Consumer<Throwable> errorHandler);
 }
