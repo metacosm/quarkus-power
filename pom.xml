@@ -195,7 +195,7 @@
               <importOrder>
                 <file>contributing/eclipse.importorder</file>
               </importOrder>
-              <removeUnusedImports />
+              <removeUnusedImports/>
             </java>
           </configuration>
           <executions>

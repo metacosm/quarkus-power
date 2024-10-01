@@ -1,8 +1,8 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import net.laprun.sustainability.power.measure.PowerMeasure;
-
 import java.util.function.Consumer;
+
+import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public interface Sampler {
 

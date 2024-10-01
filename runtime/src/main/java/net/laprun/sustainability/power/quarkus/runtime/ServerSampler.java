@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
+import io.vertx.core.http.HttpClosedException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -40,7 +41,7 @@ public class ServerSampler implements Sampler {
 
     public ServerSampler(URI powerServerURI) {
         this.powerServerURI = powerServerURI != null ? powerServerURI : DEFAULT_URI;
-        System.out.println("powerServerURI = " + this.powerServerURI);
+        System.out.println("Will connect to " + this.powerServerURI + " power server");
         final var client = ClientBuilder.newClient();
         client.register(new ClientJacksonMessageBodyReader(new ObjectMapper()));
         base = client.target(this.powerServerURI.resolve("power"));
@@ -55,17 +56,20 @@ public class ServerSampler implements Sampler {
     }
 
     @Override
-    public boolean isRunning() {
+    public synchronized boolean isRunning() {
         return measure != null;
     }
 
     public void start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
-            if (metadata == null) {
-                this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
-            }
+            synchronized (this) {
+                if (metadata == null) {
+                    this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
+                }
 
-            measure = new OngoingPowerMeasure(metadata, Duration.ofSeconds(durationInSeconds), Duration.ofMillis(frequencyInMilliseconds));
+                measure = new OngoingPowerMeasure(metadata, Duration.ofSeconds(durationInSeconds),
+                        Duration.ofMillis(frequencyInMilliseconds));
+            }
             powerAPI.open();
         } catch (Exception e) {
             if (e instanceof ProcessingException processingException) {
@@ -82,9 +86,14 @@ public class ServerSampler implements Sampler {
 
     @Override
     public void stopOnError(Throwable e) {
-        errorHandler.accept(e);
-        if(measure != null && measure.numberOfSamples() > 0) {
-           stop();
+        // ignore HttpClosedException todo: figure out why this exception occurs in the first place!
+        if (!(e instanceof HttpClosedException)) {
+            errorHandler.accept(e);
+        }
+        synchronized (this) {
+            if (measure != null && measure.numberOfSamples() > 0) {
+                stop();
+            }
         }
     }
 
@@ -103,16 +112,18 @@ public class ServerSampler implements Sampler {
             if (Arrays.equals(new double[] { -1.0 }, components)) {
                 System.out.println("Skipping invalid measure");
             } else {
-                if (measure != null) {
-                    measure.recordMeasure(components);
-                } else {
-                    System.out.println("No ongoing measure! Skipping for tick " + measureFromServer.tick());
+                synchronized (this) {
+                    if (measure != null) {
+                        measure.recordMeasure(components);
+                    } else {
+                        System.out.println("No ongoing measure! Skipping for tick " + measureFromServer.tick());
+                    }
                 }
             }
         }
     }
 
-    public void stop() {
+    public synchronized void stop() {
         powerAPI.close();
         final var measured = new StoppedPowerMeasure(measure);
         measure = null;

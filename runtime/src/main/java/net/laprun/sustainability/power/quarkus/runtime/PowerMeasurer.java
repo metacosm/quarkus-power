@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
+
 import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public class PowerMeasurer {
