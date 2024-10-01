@@ -20,6 +20,9 @@ public class StartCommand extends QuarkusCommand {
     @Option(name = "frequency", shortName = 'f', description = "The frequency at which measurements should be taken, in milliseconds", defaultValue = "1000")
     private long frequency;
 
+    @Option(name = "baselineDuration", shortName = 'b', description = "Duration during which a baseline will be established, in seconds", defaultValue = "15")
+    private int baselineDuration;
+
     public StartCommand(PowerMeasurer sensor) {
         this.sensor = sensor;
     }
@@ -37,11 +40,12 @@ public class StartCommand extends QuarkusCommand {
                 }
 
                 if (baseline == null) {
-                    commandInvocation.println("Establishing baseline for 30s, please do not use your application until done.");
+                    commandInvocation.println("Establishing baseline for " + baselineDuration
+                            + "s, please do not use your application until done.");
                     commandInvocation.println("Power measurement will start as configured after this initial measure is done.");
                     sensor.withCompletedHandler((m) -> establishBaseline(commandInvocation, m))
-                            .withErrorHandler(e -> commandInvocation.println("An error occurred: " + e.getMessage()))
-                            .start(30, 1000);
+                            .withErrorHandler(e -> handleError(commandInvocation, e))
+                            .start(baselineDuration, 1000);
                 } else {
                     sensor.withCompletedHandler((m) -> outputConsumptionSinceStarted(m, commandInvocation, false))
                             .start(duration, frequency);
@@ -55,6 +59,10 @@ public class StartCommand extends QuarkusCommand {
             return CommandResult.FAILURE;
         }
         return CommandResult.SUCCESS;
+    }
+
+    private void handleError(CommandInvocation commandInvocation, Throwable e) {
+        commandInvocation.println("An error occurred: " + e.getMessage());
     }
 
     private void establishBaseline(CommandInvocation commandInvocation, PowerMeasure m) {
