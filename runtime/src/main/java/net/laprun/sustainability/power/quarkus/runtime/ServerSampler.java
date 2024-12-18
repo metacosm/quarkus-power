@@ -2,11 +2,9 @@ package net.laprun.sustainability.power.quarkus.runtime;
 
 import java.net.ConnectException;
 import java.net.URI;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import io.vertx.core.http.HttpClosedException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -19,6 +17,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
+import io.vertx.core.http.HttpClosedException;
 import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.measure.OngoingPowerMeasure;
@@ -67,8 +66,7 @@ public class ServerSampler implements Sampler {
                     this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
                 }
 
-                measure = new OngoingPowerMeasure(metadata, Duration.ofSeconds(durationInSeconds),
-                        Duration.ofMillis(frequencyInMilliseconds));
+                measure = new OngoingPowerMeasure(metadata);
             }
             powerAPI.open();
         } catch (Exception e) {

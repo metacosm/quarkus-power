@@ -84,7 +84,6 @@ public class StartCommand extends QuarkusCommand {
         out.println(title + PowerMeasure.asString(measure));
         if (!isBaseline) {
             out.println("Baseline => " + PowerMeasure.asString(baseline));
-            out.println("Average ∆ => " + PowerMeasure.readableWithUnit(measure.average() - baseline.average()));
         }
     }
 }
