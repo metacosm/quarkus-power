@@ -21,7 +21,7 @@ public class PowerCommands implements GroupCommand {
 
     @Override
     public List<Command> getCommands() {
-        return List.of(new StartCommand(sensor), new StopCommand(sensor));
+        return List.of(new InfoCommand(sensor), new StartCommand(sensor), new StopCommand(sensor));
     }
 
     @Override
