@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
 
+import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public class PowerMeasurer {
@@ -42,6 +43,10 @@ public class PowerMeasurer {
         this.withErrorHandler(null);
     }
 
+    public Sampler sampler() {
+        return sampler;
+    }
+
     @SuppressWarnings("unused")
     public static double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
@@ -60,6 +65,10 @@ public class PowerMeasurer {
         };
         sampler.withErrorHandler(errorHandler);
         return this;
+    }
+
+    public SensorMetadata metadata() {
+        return sampler.metadata();
     }
 
     public boolean isRunning() {
