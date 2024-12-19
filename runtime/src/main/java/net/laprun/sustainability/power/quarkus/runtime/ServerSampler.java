@@ -12,6 +12,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.InboundSseEvent;
 import jakarta.ws.rs.sse.SseEventSource;
 
+import net.laprun.sustainability.power.SensorUnit;
+import net.laprun.sustainability.power.analysis.TotalMeasureProcessor;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +31,7 @@ public class ServerSampler implements Sampler {
     private final WebTarget base;
     private OngoingPowerMeasure measure;
     private SensorMetadata metadata;
+    private TotalMeasureProcessor totalProc;
     private static final long pid = ProcessHandle.current().pid();
     private Consumer<PowerMeasure> completed;
     private Consumer<Throwable> errorHandler;
@@ -40,7 +43,6 @@ public class ServerSampler implements Sampler {
 
     public ServerSampler(URI powerServerURI) {
         this.powerServerURI = powerServerURI != null ? powerServerURI : DEFAULT_URI;
-        System.out.println("Will connect to " + this.powerServerURI + " power server");
         final var client = ClientBuilder.newClient();
         client.register(new ClientJacksonMessageBodyReader(new ObjectMapper()));
         base = client.target(this.powerServerURI.resolve("power"));
@@ -55,6 +57,34 @@ public class ServerSampler implements Sampler {
     }
 
     @Override
+    public SensorMetadata metadata() {
+        synchronized (this) {
+            if (metadata == null) {
+                this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
+
+                // default total aggregation: all known components that W (or similar) as unit
+                final var integerIndices = metadata.components().values().stream()
+                        .filter(cm -> SensorUnit.W.isCommensurableWith(cm.unit()))
+                        .map(SensorMetadata.ComponentMetadata::index)
+                        .toArray(Integer[]::new);
+                if (integerIndices.length > 0) {
+                    final int[] totalIndices = new int[integerIndices.length];
+                    for (int i = 0; i < totalIndices.length; i++) {
+                        totalIndices[i] = integerIndices[i];
+                    }
+                    totalProc = new TotalMeasureProcessor(metadata, SensorUnit.mW, totalIndices);
+                }
+            }
+            return metadata;
+        }
+    }
+
+    @Override
+    public String info() {
+        return "Connected to " + powerServerURI + " (status: " + (isRunning() ? "running" : "stopped") + ")";
+    }
+
+    @Override
     public synchronized boolean isRunning() {
         return measure != null;
     }
@@ -62,11 +92,11 @@ public class ServerSampler implements Sampler {
     public void start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             synchronized (this) {
-                if (metadata == null) {
-                    this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
-                }
-
+                final var metadata = metadata();
                 measure = new OngoingPowerMeasure(metadata);
+                if(totalProc != null) {
+                    measure.registerMeasureProcessor(totalProc);
+                }
             }
             powerAPI.open();
         } catch (Exception e) {
