@@ -2,9 +2,14 @@ package net.laprun.sustainability.power.quarkus.runtime;
 
 import java.util.function.Consumer;
 
+import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public interface Sampler {
+
+    SensorMetadata metadata();
+
+    String info();
 
     boolean isRunning();
 
