@@ -3,6 +3,7 @@ package net.laprun.sustainability.power.quarkus.runtime;
 import java.net.ConnectException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import jakarta.ws.rs.ProcessingException;
@@ -13,7 +14,8 @@ import jakarta.ws.rs.sse.InboundSseEvent;
 import jakarta.ws.rs.sse.SseEventSource;
 
 import net.laprun.sustainability.power.SensorUnit;
-import net.laprun.sustainability.power.analysis.TotalMeasureProcessor;
+import net.laprun.sustainability.power.analysis.DescriptiveStatisticsComponentProcessor;
+import net.laprun.sustainability.power.analysis.total.TotalSyntheticComponent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,18 +25,72 @@ import io.vertx.core.http.HttpClosedException;
 import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.measure.OngoingPowerMeasure;
-import net.laprun.sustainability.power.measure.PowerMeasure;
 import net.laprun.sustainability.power.measure.StoppedPowerMeasure;
 
-public class ServerSampler implements Sampler {
+public class ServerSampler {
     private final SseEventSource powerAPI;
     private final WebTarget base;
     private OngoingPowerMeasure measure;
     private SensorMetadata metadata;
-    private TotalMeasureProcessor totalProc;
+    private TotalSyntheticComponent totalComp;
+    private DescriptiveStatisticsComponentProcessor totalStats;
     private static final long pid = ProcessHandle.current().pid();
-    private Consumer<PowerMeasure> completed;
+    private Consumer<TotalStoppedPowerMeasure> completed;
     private Consumer<Throwable> errorHandler;
+
+    @SuppressWarnings("unused")
+    public static class TotalStoppedPowerMeasure  extends StoppedPowerMeasure {
+        private final double total;
+        private final double min;
+        private final double max;
+        private final double avg;
+        private final double stdDev;
+
+        public TotalStoppedPowerMeasure(OngoingPowerMeasure powerMeasure, double total, double min, double max, double avg, double stdDev) {
+            super(powerMeasure);
+            this.total = total;
+            this.min = min;
+            this.max = max;
+            this.avg = avg;
+            this.stdDev = stdDev;
+        }
+
+        public double getTotal() {
+            return total;
+        }
+
+        public double getMin() {
+            return min;
+        }
+
+        public double getMax() {
+            return max;
+        }
+
+        public double getAvg() {
+            return avg;
+        }
+
+        public double getStdDev() {
+            return stdDev;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("total: %s (min: %s / max: %s / avg: %s / σ: %s)", withUnit(total), withUnit(min), withUnit(max), withUnit(avg), withUnit(stdDev));
+        }
+
+        public static String withUnit(double mWValue) {
+            var unit = "mW";
+            double value = mWValue;
+            if(mWValue > 1000) {
+                unit = "W";
+                value = mWValue / 1000;
+            }
+
+            return String.format("%.2f%s", value, unit);
+        }
+    }
 
     @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
     URI powerServerURI;
@@ -56,7 +112,6 @@ public class ServerSampler implements Sampler {
         this(null);
     }
 
-    @Override
     public SensorMetadata metadata() {
         synchronized (this) {
             if (metadata == null) {
@@ -72,33 +127,34 @@ public class ServerSampler implements Sampler {
                     for (int i = 0; i < totalIndices.length; i++) {
                         totalIndices[i] = integerIndices[i];
                     }
-                    totalProc = new TotalMeasureProcessor(metadata, SensorUnit.mW, totalIndices);
+                    totalComp = new TotalSyntheticComponent(metadata, SensorUnit.mW, totalIndices);
+                    totalStats = new DescriptiveStatisticsComponentProcessor();
                 }
             }
             return metadata;
         }
     }
 
-    @Override
     public String info() {
-        return "Connected to " + powerServerURI + " (status: " + (isRunning() ? "running" : "stopped") + ")";
+        return "Connected to " + powerServerURI + " (status: " + (isRunning() ? "running" : "stopped")
+                + ")\n====\nLocal metadata (including synthetic components, if any):\n"
+                + Optional.ofNullable(measure).map(m -> m.metadata().toString()).orElse("No ongoing measure");
     }
 
-    @Override
     public synchronized boolean isRunning() {
         return measure != null;
     }
 
-    public void start(long durationInSeconds, long frequencyInMilliseconds) {
+    public OngoingPowerMeasure start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             synchronized (this) {
                 final var metadata = metadata();
-                measure = new OngoingPowerMeasure(metadata);
-                if(totalProc != null) {
-                    measure.registerMeasureProcessor(totalProc);
-                }
+                measure = new OngoingPowerMeasure(metadata, totalComp);
+                final var totalIndex = measure.metadata().metadataFor(totalComp.metadata().name()).index();
+                measure.registerProcessorFor(totalIndex, totalStats);
             }
             powerAPI.open();
+            return measure;
         } catch (Exception e) {
             if (e instanceof ProcessingException processingException) {
                 final var cause = processingException.getCause();
@@ -109,10 +165,10 @@ public class ServerSampler implements Sampler {
                 }
             }
             stopOnError(e);
+            return null;
         }
     }
 
-    @Override
     public void stopOnError(Throwable e) {
         // ignore HttpClosedException todo: figure out why this exception occurs in the first place!
         if (!(e instanceof HttpClosedException)) {
@@ -126,7 +182,7 @@ public class ServerSampler implements Sampler {
     }
 
     private void onComplete() {
-        System.out.println("Finished!");
+        System.out.println("Power measurement finished!");
     }
 
     private void onEvent(InboundSseEvent event) {
@@ -151,21 +207,22 @@ public class ServerSampler implements Sampler {
         }
     }
 
-    public synchronized void stop() {
+    public synchronized TotalStoppedPowerMeasure stop() {
         powerAPI.close();
-        final var measured = new StoppedPowerMeasure(measure);
+        final var stats = totalStats.statistics();
+        final var measured = new TotalStoppedPowerMeasure(measure, stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation());
         measure = null;
         completed.accept(measured);
+        return measured;
     }
 
-    @Override
-    public Sampler withCompletedHandler(Consumer<PowerMeasure> completed) {
+    public ServerSampler withCompletedHandler(Consumer<TotalStoppedPowerMeasure> completed) {
         this.completed = completed;
         return this;
     }
 
-    @Override
-    public Sampler withErrorHandler(Consumer<Throwable> errorHandler) {
+
+    public ServerSampler withErrorHandler(Consumer<Throwable> errorHandler) {
         this.errorHandler = errorHandler;
         return this;
     }
