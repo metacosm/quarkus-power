@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 import com.sun.management.OperatingSystemMXBean;
 
 import net.laprun.sustainability.power.SensorMetadata;
-import net.laprun.sustainability.power.measure.PowerMeasure;
 
 public class PowerMeasurer {
     private static final OperatingSystemMXBean osBean;
@@ -24,7 +23,7 @@ public class PowerMeasurer {
     }
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final Sampler sampler;
+    private final ServerSampler sampler;
     private static PowerMeasurer instance;
 
     public static PowerMeasurer instance() {
@@ -38,12 +37,12 @@ public class PowerMeasurer {
         this(new ServerSampler());
     }
 
-    public PowerMeasurer(Sampler sampler) {
+    public PowerMeasurer(ServerSampler sampler) {
         this.sampler = sampler;
         this.withErrorHandler(null);
     }
 
-    public Sampler sampler() {
+    public ServerSampler sampler() {
         return sampler;
     }
 
@@ -54,7 +53,7 @@ public class PowerMeasurer {
         return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
-    public PowerMeasurer withCompletedHandler(Consumer<PowerMeasure> completed) {
+    public PowerMeasurer withCompletedHandler(Consumer<ServerSampler.TotalStoppedPowerMeasure> completed) {
         sampler.withCompletedHandler(completed);
         return this;
     }
