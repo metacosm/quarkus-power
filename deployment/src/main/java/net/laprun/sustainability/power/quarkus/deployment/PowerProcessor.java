@@ -1,11 +1,7 @@
 package net.laprun.sustainability.power.quarkus.deployment;
 
-import io.quarkus.deployment.IsDevelopment;
-import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
-import io.quarkus.deployment.builditem.ConsoleCommandBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
-import net.laprun.sustainability.power.quarkus.deployment.devui.commands.PowerCommands;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 class PowerProcessor {
@@ -17,9 +13,8 @@ class PowerProcessor {
         return new FeatureBuildItem(FEATURE);
     }
 
-    @BuildStep(onlyIf = IsDevelopment.class)
-    void addConsoleCommands(BuildProducer<ConsoleCommandBuildItem> commands) {
-        // register dev console commands
-        commands.produce(new ConsoleCommandBuildItem(new PowerCommands(PowerMeasurer.instance())));
+    @BuildStep
+    PowerMeasurerBuildItem powerMeasurer() {
+        return new PowerMeasurerBuildItem(PowerMeasurer.instance());
     }
 }
