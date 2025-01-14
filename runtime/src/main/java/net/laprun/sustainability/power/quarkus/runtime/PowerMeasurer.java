@@ -8,6 +8,9 @@ import java.util.function.Consumer;
 
 import com.sun.management.OperatingSystemMXBean;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import net.laprun.sustainability.power.SensorMetadata;
 
 public class PowerMeasurer {
@@ -26,6 +29,7 @@ public class PowerMeasurer {
     private final ServerSampler sampler;
     private static PowerMeasurer instance;
 
+    @Produces
     public static PowerMeasurer instance() {
         if (instance == null) {
             instance = new PowerMeasurer();
