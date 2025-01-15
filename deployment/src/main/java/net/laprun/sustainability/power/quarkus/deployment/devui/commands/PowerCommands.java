@@ -15,8 +15,8 @@ import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 public class PowerCommands implements GroupCommand {
     private final PowerMeasurer sensor;
 
-    public PowerCommands(PowerMeasurer sensor) {
-        this.sensor = sensor;
+    public PowerCommands() {
+        this.sensor = new PowerMeasurer();
     }
 
     @Override
