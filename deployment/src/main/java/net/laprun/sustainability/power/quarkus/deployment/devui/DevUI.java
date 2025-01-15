@@ -8,7 +8,6 @@ import io.quarkus.deployment.builditem.ConsoleCommandBuildItem;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
-import net.laprun.sustainability.power.quarkus.deployment.PowerMeasurerBuildItem;
 import net.laprun.sustainability.power.quarkus.deployment.devui.commands.PowerCommands;
 import net.laprun.sustainability.power.quarkus.runtime.devui.PowerService;
 
@@ -16,16 +15,14 @@ import net.laprun.sustainability.power.quarkus.runtime.devui.PowerService;
 public class DevUI {
 
     @BuildStep
-    void addConsoleCommands(PowerMeasurerBuildItem powerMeasurerBI, BuildProducer<ConsoleCommandBuildItem> commands) {
+    void addConsoleCommands(BuildProducer<ConsoleCommandBuildItem> commands) {
         // register dev console commands
-        commands.produce(new ConsoleCommandBuildItem(new PowerCommands(powerMeasurerBI.getMeasurer())));
+        commands.produce(new ConsoleCommandBuildItem(new PowerCommands()));
     }
 
     @BuildStep
-    public CardPageBuildItem pages(PowerMeasurerBuildItem powerMeasurerBI) {
-        final var measurer = powerMeasurerBI.getMeasurer();
+    public CardPageBuildItem pages() {
         CardPageBuildItem card = new CardPageBuildItem();
-        card.addBuildTimeData("info", measurer.sampler().info());
         card.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:info")
                 .componentLink("qwc-power-info.js"));
