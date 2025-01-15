@@ -36,6 +36,10 @@ public class PowerMeasurer {
         return sampler;
     }
 
+    public Metadata measureMetadata() {
+        return new Metadata(sampler.powerServerURI(), sampler.metadata(), sampler.localMetadata(), sampler.status());
+    }
+
     @SuppressWarnings("unused")
     public static double cpuShareOfJVMProcess() {
         final var processCpuLoad = osBean.getProcessCpuLoad();
@@ -54,10 +58,6 @@ public class PowerMeasurer {
         };
         sampler.withErrorHandler(errorHandler);
         return this;
-    }
-
-    public SensorMetadata metadata() {
-        return sampler.metadata();
     }
 
     public boolean isRunning() {

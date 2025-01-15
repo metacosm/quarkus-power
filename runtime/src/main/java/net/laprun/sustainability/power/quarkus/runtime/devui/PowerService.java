@@ -9,6 +9,18 @@ public class PowerService {
     PowerMeasurer measurer;
 
     public String info() {
-        return measurer.sampler().info();
+        return measurer.measureMetadata().status();
+    }
+
+    public String remoteMetadata() {
+        return measurer.measureMetadata().remote()
+                .map(Object::toString)
+                .orElse("Could not get remote metadata");
+    }
+
+    public String localMetadata() {
+        return measurer.measureMetadata().local()
+                .map(Object::toString)
+                .orElse("No ongoing measure");
     }
 }
