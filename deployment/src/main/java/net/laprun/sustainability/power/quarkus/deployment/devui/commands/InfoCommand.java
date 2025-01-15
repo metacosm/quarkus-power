@@ -17,8 +17,7 @@ public class InfoCommand extends QuarkusCommand {
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) {
-        commandInvocation.println(powerMeasurer.sampler().info());
-        commandInvocation.println("\n====\nSensor metadata:\n" + powerMeasurer.metadata());
+        commandInvocation.println(powerMeasurer.measureMetadata().toString());
         return CommandResult.SUCCESS;
     }
 }

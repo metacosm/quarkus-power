@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import io.quarkus.logging.Log;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -37,6 +38,7 @@ public class ServerSampler {
     private static final long pid = ProcessHandle.current().pid();
     private Consumer<TotalStoppedPowerMeasure> completed;
     private Consumer<Throwable> errorHandler;
+    private String status = "initialized";
 
     @SuppressWarnings("unused")
     public static class TotalStoppedPowerMeasure  extends StoppedPowerMeasure {
@@ -112,33 +114,44 @@ public class ServerSampler {
         this(null);
     }
 
-    public SensorMetadata metadata() {
+    public Optional<SensorMetadata> metadata() {
         synchronized (this) {
             if (metadata == null) {
-                this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
-
-                // default total aggregation: all known components that W (or similar) as unit
-                final var integerIndices = metadata.components().values().stream()
-                        .filter(cm -> SensorUnit.W.isCommensurableWith(cm.unit()))
-                        .map(SensorMetadata.ComponentMetadata::index)
-                        .toArray(Integer[]::new);
-                if (integerIndices.length > 0) {
-                    final int[] totalIndices = new int[integerIndices.length];
-                    for (int i = 0; i < totalIndices.length; i++) {
-                        totalIndices[i] = integerIndices[i];
+                try {
+                    this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
+                    // default total aggregation: all known components that W (or similar) as unit
+                    final var integerIndices = metadata.components().values().stream()
+                            .filter(cm -> SensorUnit.W.isCommensurableWith(cm.unit()))
+                            .map(SensorMetadata.ComponentMetadata::index)
+                            .toArray(Integer[]::new);
+                    if (integerIndices.length > 0) {
+                        final int[] totalIndices = new int[integerIndices.length];
+                        for (int i = 0; i < totalIndices.length; i++) {
+                            totalIndices[i] = integerIndices[i];
+                        }
+                        totalComp = new TotalSyntheticComponent(metadata, SensorUnit.mW, totalIndices);
+                        totalStats = new DescriptiveStatisticsComponentProcessor();
                     }
-                    totalComp = new TotalSyntheticComponent(metadata, SensorUnit.mW, totalIndices);
-                    totalStats = new DescriptiveStatisticsComponentProcessor();
+                    status = "connected";
+                } catch (Exception e) {
+                    Log.warn("Failed to load sensor metadata", e);
+                    status = "error: failed to load sensor metadata (" + e.getMessage() + ")";
                 }
             }
-            return metadata;
+            return Optional.ofNullable(metadata);
         }
     }
 
-    public String info() {
-        return "Connected to " + powerServerURI + " (status: " + (isRunning() ? "running" : "stopped")
-                + ")\n====\nLocal metadata (including synthetic components, if any):\n"
-                + Optional.ofNullable(measure).map(m -> m.metadata().toString()).orElse("No ongoing measure");
+    URI powerServerURI() {
+        return powerServerURI;
+    }
+
+    Optional<SensorMetadata> localMetadata() {
+        return Optional.ofNullable(measure).map(OngoingPowerMeasure::metadata);
+    }
+
+    public String status() {
+        return status;
     }
 
     public synchronized boolean isRunning() {
@@ -148,12 +161,13 @@ public class ServerSampler {
     public OngoingPowerMeasure start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             synchronized (this) {
-                final var metadata = metadata();
+                final var metadata = metadata().orElseThrow(IllegalStateException::new);
                 measure = new OngoingPowerMeasure(metadata, totalComp);
                 final var totalIndex = measure.metadata().metadataFor(totalComp.metadata().name()).index();
                 measure.registerProcessorFor(totalIndex, totalStats);
             }
             powerAPI.open();
+            status = "started";
             return measure;
         } catch (Exception e) {
             if (e instanceof ProcessingException processingException) {
@@ -174,6 +188,7 @@ public class ServerSampler {
         if (!(e instanceof HttpClosedException)) {
             errorHandler.accept(e);
         }
+        status = "error: measure failed (" + e.getMessage() + ")";
         synchronized (this) {
             if (measure != null && measure.numberOfSamples() > 0) {
                 stop();
@@ -213,6 +228,7 @@ public class ServerSampler {
         final var measured = new TotalStoppedPowerMeasure(measure, stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation());
         measure = null;
         completed.accept(measured);
+        status = "stopped";
         return measured;
     }
 
