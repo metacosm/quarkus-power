@@ -8,7 +8,7 @@ public class PowerService {
     @Inject
     PowerMeasurer measurer;
 
-    public String info() {
+    public String status() {
         return measurer.measureMetadata().status();
     }
 
