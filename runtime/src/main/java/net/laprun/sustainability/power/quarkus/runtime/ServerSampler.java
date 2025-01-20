@@ -3,10 +3,11 @@ package net.laprun.sustainability.power.quarkus.runtime;
 import java.net.ConnectException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import io.quarkus.logging.Log;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -14,17 +15,18 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.InboundSseEvent;
 import jakarta.ws.rs.sse.SseEventSource;
 
-import net.laprun.sustainability.power.SensorUnit;
-import net.laprun.sustainability.power.analysis.DescriptiveStatisticsComponentProcessor;
-import net.laprun.sustainability.power.analysis.total.TotalSyntheticComponent;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.quarkus.logging.Log;
 import io.quarkus.rest.client.reactive.jackson.runtime.serialisers.ClientJacksonMessageBodyReader;
 import io.vertx.core.http.HttpClosedException;
 import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
+import net.laprun.sustainability.power.SensorUnit;
+import net.laprun.sustainability.power.analysis.DescriptiveStatisticsComponentProcessor;
+import net.laprun.sustainability.power.analysis.total.TotalSyntheticComponent;
 import net.laprun.sustainability.power.measure.OngoingPowerMeasure;
 import net.laprun.sustainability.power.measure.StoppedPowerMeasure;
 
@@ -146,8 +148,22 @@ public class ServerSampler {
         return powerServerURI;
     }
 
-    Optional<SensorMetadata> localMetadata() {
-        return Optional.ofNullable(measure).map(OngoingPowerMeasure::metadata);
+    /**
+     * Only returns local synthetic components, if any
+     * @return
+     */
+    List<SensorMetadata.ComponentMetadata> localMetadata() {
+        if (metadata == null) {
+            return List.of();
+        }
+        return Optional.ofNullable(measure).map(m -> {
+            // remove server metadata entries
+            return m.metadata().components().entrySet().stream()
+                    .filter((e) -> !metadata.exists(e.getKey()))
+                    .map(Map.Entry::getValue)
+                    .toList();
+
+        }).orElse(List.of());
     }
 
     public String status() {

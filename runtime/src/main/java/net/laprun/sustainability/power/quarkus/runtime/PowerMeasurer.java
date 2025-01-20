@@ -1,12 +1,16 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
 import java.lang.management.ManagementFactory;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.sun.management.OperatingSystemMXBean;
+
+import net.laprun.sustainability.power.SensorMetadata;
 
 public class PowerMeasurer {
     private static final OperatingSystemMXBean osBean;
@@ -36,8 +40,12 @@ public class PowerMeasurer {
         return sampler;
     }
 
-    public Metadata measureMetadata() {
-        return new Metadata(sampler.powerServerURI(), sampler.metadata(), sampler.localMetadata(), sampler.status());
+    public <T> Metadata<T> measureMetadata(Function<SensorMetadata.ComponentMetadata, T> converter) {
+        final var metadata = sampler.metadata();
+        return new Metadata<>(sampler.powerServerURI(),
+                metadata.map(SensorMetadata::documentation).orElse(null),
+                metadata.map(sm -> sm.components().values().stream().toList()).orElse(List.of()),
+                sampler.localMetadata(), sampler.status(), converter);
     }
 
     @SuppressWarnings("unused")
@@ -65,10 +73,12 @@ public class PowerMeasurer {
     }
 
     public void start(long durationInSeconds, long frequencyInMilliseconds) {
-        sampler.start(durationInSeconds, frequencyInMilliseconds);
+        if (!isRunning()) {
+            sampler.start(durationInSeconds, frequencyInMilliseconds);
 
-        if (durationInSeconds > 0) {
-            executor.schedule(this::stop, durationInSeconds, TimeUnit.SECONDS);
+            if (durationInSeconds > 0) {
+                executor.schedule(this::stop, durationInSeconds, TimeUnit.SECONDS);
+            }
         }
     }
 
