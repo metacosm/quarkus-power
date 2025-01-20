@@ -1,5 +1,7 @@
 package net.laprun.sustainability.power.quarkus.deployment.devui.commands;
 
+import java.util.function.Function;
+
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
@@ -17,7 +19,7 @@ public class InfoCommand extends QuarkusCommand {
 
     @Override
     public CommandResult doExecute(CommandInvocation commandInvocation) {
-        commandInvocation.println(powerMeasurer.measureMetadata().toString());
+        commandInvocation.println(powerMeasurer.measureMetadata(Function.identity()).toString());
         return CommandResult.SUCCESS;
     }
 }
