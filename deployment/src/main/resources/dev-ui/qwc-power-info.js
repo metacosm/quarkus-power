@@ -16,7 +16,8 @@ export class QwcPowerInfo extends QwcHotReloadElement {
         _remoteMetadata: {state: true},
         _localMetadata: {state: true},
         _status: {state: true},
-        _running: {state: true}
+        _running: {state: true},
+        _measure: {state: true},
     };
 
     constructor() {
@@ -46,11 +47,27 @@ export class QwcPowerInfo extends QwcHotReloadElement {
                         ${this.renderStartOrStop()}
                         ${this.metadata(this._localMetadata, "Local synthetic components (if any)", "No ongoing measure")}
                         ${this.metadata(this._remoteMetadata, "System power metadata", "Couldn't retrieve metadata")}
+                        ${this.displayMeasures()}
                     </vaadin-vertical-layout>
-                </vaadin-details>
-            `;
+                </vaadin-details>`;
         } else {
             return html`Info unavailable`;
+        }
+    }
+
+    displayMeasures() {
+        if (this._measure) {
+            return html`
+            <vaadin-details theme="filled">
+                <vaadin-details-summary slot="summary">
+                    Measure ${this._measure.result} (${this._measure.samplesCount} samples)
+                </vaadin-details-summary>
+                <vaadin-vertical-layout theme="spacing-s">
+                    <ul>
+                        ${this._measure.measures.map(measure => html`<li>${measure}</li>`)}
+                    </ul>
+                </vaadin-vertical-layout>
+            </vaadin-details>`
         }
     }
 
@@ -75,7 +92,7 @@ export class QwcPowerInfo extends QwcHotReloadElement {
     }
 
     _metadata(metadata, emptyMsg) {
-        if (Object.keys(metadata).length !== 0) {
+        if (metadata !== undefined && Object.keys(metadata).length !== 0) {
             return html`<ul>${metadata.map(component => html`<li>${this.component(component)}</li>`)}</ul>`;
         } else {
             return html`${emptyMsg}`;
@@ -91,16 +108,16 @@ export class QwcPowerInfo extends QwcHotReloadElement {
     }
 
     _startOrStop() {
-        let action = this._running ? "stop" : "start";
-        this.jsonRpc.startOrStop({start: !this._running}).then(jsonRpcResponse => {
-            let outcome = jsonRpcResponse.result;
-            if (!outcome) {
-                notifier.showErrorMessage("Couldn't " + action + " power measure");
-            } else {
-                this.hotReload();
-                // keep the notification open indefinitely if we're stopped to be able to see the results
-                notifier.showInfoMessage(outcome, "bottom-start", action === "stop" ? 15 : 5);
+        let stop = this._running;
+        this.jsonRpc.startOrStop({start: !stop}).then(jsonRpcResponse => {
+            let msg = "Started";
+            if (stop) {
+                this._measure = jsonRpcResponse.result;
+                msg = "Stopped (" + this._measure.samplesCount + " samples taken)";
             }
+
+            this.hotReload();
+            notifier.showInfoMessage(msg);
         });
     }
 }

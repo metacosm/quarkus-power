@@ -49,9 +49,15 @@ public class ServerSampler {
         private final double max;
         private final double avg;
         private final double stdDev;
+        private final OngoingPowerMeasure measure; // todo: remove
+
+        public TotalStoppedPowerMeasure(TotalStoppedPowerMeasure other) {
+            this(other.underlyingMeasure(), other.total, other.min, other.max, other.avg, other.stdDev);
+        }
 
         public TotalStoppedPowerMeasure(OngoingPowerMeasure powerMeasure, double total, double min, double max, double avg, double stdDev) {
             super(powerMeasure);
+            this.measure = powerMeasure;
             this.total = total;
             this.min = min;
             this.max = max;
@@ -82,6 +88,10 @@ public class ServerSampler {
         @Override
         public String toString() {
             return String.format("total: %s (min: %s / max: %s / avg: %s / σ: %s)", withUnit(total), withUnit(min), withUnit(max), withUnit(avg), withUnit(stdDev));
+        }
+
+        public OngoingPowerMeasure underlyingMeasure() {
+            return measure;
         }
 
         public static String withUnit(double mWValue) {
@@ -201,7 +211,7 @@ public class ServerSampler {
 
     public void stopOnError(Throwable e) {
         // ignore HttpClosedException todo: figure out why this exception occurs in the first place!
-        if (!(e instanceof HttpClosedException)) {
+        if (!(e instanceof HttpClosedException) && errorHandler != null) {
             errorHandler.accept(e);
         }
         status = "error: measure failed (" + e.getMessage() + ")";
@@ -243,7 +253,9 @@ public class ServerSampler {
         final var stats = totalStats.statistics();
         final var measured = new TotalStoppedPowerMeasure(measure, stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation());
         measure = null;
-        completed.accept(measured);
+        if (completed != null) {
+            completed.accept(measured);
+        }
         status = "stopped";
         return measured;
     }

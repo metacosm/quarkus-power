@@ -2,6 +2,7 @@ package net.laprun.sustainability.power.quarkus.runtime;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,13 @@ public class PowerMeasurer {
         this.withErrorHandler(null);
     }
 
+    @SuppressWarnings("unused")
+    public static double cpuShareOfJVMProcess() {
+        final var processCpuLoad = osBean.getProcessCpuLoad();
+        final var cpuLoad = osBean.getCpuLoad();
+        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
+    }
+
     public ServerSampler sampler() {
         return sampler;
     }
@@ -46,13 +54,6 @@ public class PowerMeasurer {
                 metadata.map(SensorMetadata::documentation).orElse(null),
                 metadata.map(sm -> sm.components().values().stream().toList()).orElse(List.of()),
                 sampler.localMetadata(), sampler.status(), converter);
-    }
-
-    @SuppressWarnings("unused")
-    public static double cpuShareOfJVMProcess() {
-        final var processCpuLoad = osBean.getProcessCpuLoad();
-        final var cpuLoad = osBean.getCpuLoad();
-        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
     public PowerMeasurer withCompletedHandler(Consumer<ServerSampler.TotalStoppedPowerMeasure> completed) {
@@ -82,9 +83,7 @@ public class PowerMeasurer {
         }
     }
 
-    public void stop() {
-        if (isRunning()) {
-            sampler.stop();
-        }
+    public Optional<ServerSampler.TotalStoppedPowerMeasure> stop() {
+        return isRunning() ? Optional.of(sampler.stop()) : Optional.empty();
     }
 }
