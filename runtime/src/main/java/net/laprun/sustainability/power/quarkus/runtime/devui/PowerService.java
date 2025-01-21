@@ -6,7 +6,6 @@ import java.util.function.Function;
 import jakarta.inject.Inject;
 
 import net.laprun.sustainability.power.SensorMetadata;
-import net.laprun.sustainability.power.analysis.DescriptiveStatisticsComponentProcessor;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 import net.laprun.sustainability.power.quarkus.runtime.ServerSampler;
 
@@ -57,12 +56,7 @@ public class PowerService {
         }
 
         public double[] getMeasures() {
-            // todo: this should be made easier
-            return underlyingMeasure().processors().processorsFor(4).stream()
-                    .findFirst()
-                    .map(DescriptiveStatisticsComponentProcessor.class::cast)
-                    .map(dscp -> dscp.statistics().getValues())
-                    .orElse(null);
+            return underlyingMeasure().getMeasuresFor(4).toArray();
         }
     }
 }

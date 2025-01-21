@@ -25,19 +25,16 @@ import io.vertx.core.http.HttpClosedException;
 import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.SensorUnit;
-import net.laprun.sustainability.power.analysis.DescriptiveStatisticsComponentProcessor;
-import net.laprun.sustainability.power.analysis.total.TotalSyntheticComponent;
 import net.laprun.sustainability.power.measure.OngoingPowerMeasure;
 import net.laprun.sustainability.power.measure.StoppedPowerMeasure;
 
 public class ServerSampler {
+    private static final long pid = ProcessHandle.current().pid();
     private final SseEventSource powerAPI;
     private final WebTarget base;
     private OngoingPowerMeasure measure;
     private SensorMetadata metadata;
-    private TotalSyntheticComponent totalComp;
-    private DescriptiveStatisticsComponentProcessor totalStats;
-    private static final long pid = ProcessHandle.current().pid();
+    private TotalRecorder totalComp;
     private Consumer<TotalStoppedPowerMeasure> completed;
     private Consumer<Throwable> errorHandler;
     private String status = "initialized";
@@ -49,7 +46,6 @@ public class ServerSampler {
         private final double max;
         private final double avg;
         private final double stdDev;
-        private final OngoingPowerMeasure measure; // todo: remove
 
         public TotalStoppedPowerMeasure(TotalStoppedPowerMeasure other) {
             this(other.underlyingMeasure(), other.total, other.min, other.max, other.avg, other.stdDev);
@@ -57,7 +53,6 @@ public class ServerSampler {
 
         public TotalStoppedPowerMeasure(OngoingPowerMeasure powerMeasure, double total, double min, double max, double avg, double stdDev) {
             super(powerMeasure);
-            this.measure = powerMeasure;
             this.total = total;
             this.min = min;
             this.max = max;
@@ -88,10 +83,6 @@ public class ServerSampler {
         @Override
         public String toString() {
             return String.format("total: %s (min: %s / max: %s / avg: %s / σ: %s)", withUnit(total), withUnit(min), withUnit(max), withUnit(avg), withUnit(stdDev));
-        }
-
-        public OngoingPowerMeasure underlyingMeasure() {
-            return measure;
         }
 
         public static String withUnit(double mWValue) {
@@ -141,8 +132,7 @@ public class ServerSampler {
                         for (int i = 0; i < totalIndices.length; i++) {
                             totalIndices[i] = integerIndices[i];
                         }
-                        totalComp = new TotalSyntheticComponent(metadata, SensorUnit.mW, totalIndices);
-                        totalStats = new DescriptiveStatisticsComponentProcessor();
+                        totalComp = new TotalRecorder(metadata, SensorUnit.mW, totalIndices);
                     }
                     status = "connected";
                 } catch (Exception e) {
@@ -188,9 +178,8 @@ public class ServerSampler {
         try {
             synchronized (this) {
                 final var metadata = metadata().orElseThrow(IllegalStateException::new);
+                totalComp.reset(); // reset recorded values since we're recording a new measure
                 measure = new OngoingPowerMeasure(metadata, totalComp);
-                final var totalIndex = measure.metadata().metadataFor(totalComp.metadata().name()).index();
-                measure.registerProcessorFor(totalIndex, totalStats);
             }
             powerAPI.open();
             status = "started";
@@ -250,7 +239,7 @@ public class ServerSampler {
 
     public synchronized TotalStoppedPowerMeasure stop() {
         powerAPI.close();
-        final var stats = totalStats.statistics();
+        final var stats = totalComp.statistics();
         final var measured = new TotalStoppedPowerMeasure(measure, stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation());
         measure = null;
         if (completed != null) {
