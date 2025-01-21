@@ -1,6 +1,5 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -9,22 +8,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.sun.management.OperatingSystemMXBean;
-
 import net.laprun.sustainability.power.SensorMetadata;
 
 public class PowerMeasurer {
-    private static final OperatingSystemMXBean osBean;
-
-    static {
-        osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        // take two measures to avoid initial zero values
-        osBean.getProcessCpuLoad();
-        osBean.getCpuLoad();
-        osBean.getProcessCpuLoad();
-        osBean.getCpuLoad();
-    }
-
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final ServerSampler sampler;
 
@@ -35,13 +21,6 @@ public class PowerMeasurer {
     public PowerMeasurer(ServerSampler sampler) {
         this.sampler = sampler;
         this.withErrorHandler(null);
-    }
-
-    @SuppressWarnings("unused")
-    public static double cpuShareOfJVMProcess() {
-        final var processCpuLoad = osBean.getProcessCpuLoad();
-        final var cpuLoad = osBean.getCpuLoad();
-        return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
 
     public ServerSampler sampler() {
