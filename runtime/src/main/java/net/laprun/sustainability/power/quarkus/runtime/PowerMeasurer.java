@@ -35,7 +35,7 @@ public class PowerMeasurer {
                 sampler.localMetadata(), sampler.status(), converter);
     }
 
-    public PowerMeasurer withCompletedHandler(Consumer<ServerSampler.TotalStoppedPowerMeasure> completed) {
+    public PowerMeasurer withCompletedHandler(Consumer<DisplayableMeasure> completed) {
         sampler.withCompletedHandler(completed);
         return this;
     }
@@ -62,7 +62,7 @@ public class PowerMeasurer {
         }
     }
 
-    public Optional<ServerSampler.TotalStoppedPowerMeasure> stop() {
+    public Optional<DisplayableMeasure> stop() {
         return isRunning() ? Optional.of(sampler.stop()) : Optional.empty();
     }
 }

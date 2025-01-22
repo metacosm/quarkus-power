@@ -26,7 +26,6 @@ import net.laprun.sustainability.power.SensorMeasure;
 import net.laprun.sustainability.power.SensorMetadata;
 import net.laprun.sustainability.power.SensorUnit;
 import net.laprun.sustainability.power.measure.OngoingPowerMeasure;
-import net.laprun.sustainability.power.measure.StoppedPowerMeasure;
 
 public class ServerSampler {
     private static final long pid = ProcessHandle.current().pid();
@@ -35,67 +34,9 @@ public class ServerSampler {
     private OngoingPowerMeasure measure;
     private SensorMetadata metadata;
     private TotalRecorder totalComp;
-    private Consumer<TotalStoppedPowerMeasure> completed;
+    private Consumer<DisplayableMeasure> completed;
     private Consumer<Throwable> errorHandler;
     private String status = "initialized";
-
-    @SuppressWarnings("unused")
-    public static class TotalStoppedPowerMeasure  extends StoppedPowerMeasure {
-        private final double total;
-        private final double min;
-        private final double max;
-        private final double avg;
-        private final double stdDev;
-
-        public TotalStoppedPowerMeasure(TotalStoppedPowerMeasure other) {
-            this(other.underlyingMeasure(), other.total, other.min, other.max, other.avg, other.stdDev);
-        }
-
-        public TotalStoppedPowerMeasure(OngoingPowerMeasure powerMeasure, double total, double min, double max, double avg, double stdDev) {
-            super(powerMeasure);
-            this.total = total;
-            this.min = min;
-            this.max = max;
-            this.avg = avg;
-            this.stdDev = stdDev;
-        }
-
-        public double getTotal() {
-            return total;
-        }
-
-        public double getMin() {
-            return min;
-        }
-
-        public double getMax() {
-            return max;
-        }
-
-        public double getAvg() {
-            return avg;
-        }
-
-        public double getStdDev() {
-            return stdDev;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("total: %s (min: %s / max: %s / avg: %s / σ: %s)", withUnit(total), withUnit(min), withUnit(max), withUnit(avg), withUnit(stdDev));
-        }
-
-        public static String withUnit(double mWValue) {
-            var unit = "mW";
-            double value = mWValue;
-            if(mWValue > 1000) {
-                unit = "W";
-                value = mWValue / 1000;
-            }
-
-            return String.format("%.2f%s", value, unit);
-        }
-    }
 
     @ConfigProperty(name = "power-server.url", defaultValue = "http://localhost:20432")
     URI powerServerURI;
@@ -237,10 +178,10 @@ public class ServerSampler {
         }
     }
 
-    public synchronized TotalStoppedPowerMeasure stop() {
+    public synchronized DisplayableMeasure stop() {
         powerAPI.close();
         final var stats = totalComp.statistics();
-        final var measured = new TotalStoppedPowerMeasure(measure, stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation());
+        final var measured = new DisplayableMeasure(stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation(), stats.getValues());
         measure = null;
         if (completed != null) {
             completed.accept(measured);
@@ -249,7 +190,7 @@ public class ServerSampler {
         return measured;
     }
 
-    public ServerSampler withCompletedHandler(Consumer<TotalStoppedPowerMeasure> completed) {
+    public ServerSampler withCompletedHandler(Consumer<DisplayableMeasure> completed) {
         this.completed = completed;
         return this;
     }
