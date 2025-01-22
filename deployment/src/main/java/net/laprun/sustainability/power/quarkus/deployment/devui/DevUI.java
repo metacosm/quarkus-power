@@ -24,8 +24,8 @@ public class DevUI {
     public CardPageBuildItem pages() {
         CardPageBuildItem card = new CardPageBuildItem();
         card.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:info")
-                .componentLink("qwc-power-info.js"));
+                .icon("font-awesome-solid:stopwatch")
+                .componentLink("qwc-power-measure.js"));
         return card;
     }
 
