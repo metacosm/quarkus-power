@@ -60,7 +60,7 @@ export class QwcPowerInfo extends QwcHotReloadElement {
             return html`
             <vaadin-details theme="filled">
                 <vaadin-details-summary slot="summary">
-                    Measure ${this._measure.result} (${this._measure.samplesCount} samples)
+                    Measure ${this._measure.summary} (${this._measure.samplesCount} samples)
                 </vaadin-details-summary>
                 <vaadin-vertical-layout theme="spacing-s">
                     <ul>

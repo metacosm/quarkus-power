@@ -6,13 +6,13 @@ import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.option.Option;
 
 import io.quarkus.deployment.console.QuarkusCommand;
+import net.laprun.sustainability.power.quarkus.runtime.DisplayableMeasure;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
-import net.laprun.sustainability.power.quarkus.runtime.ServerSampler;
 
 @CommandDefinition(name = "start", description = "Starts measuring power consumption of the current application")
 public class StartCommand extends QuarkusCommand {
     private final PowerMeasurer sensor;
-    private ServerSampler.TotalStoppedPowerMeasure baseline;
+    private DisplayableMeasure baseline;
 
     @Option(name = "stopAfter", shortName = 's', description = "Automatically stop the measures after the specified duration in seconds", defaultValue = "-1")
     private long duration;
@@ -65,7 +65,7 @@ public class StartCommand extends QuarkusCommand {
         commandInvocation.println("An error occurred: " + e.getMessage());
     }
 
-    private void establishBaseline(CommandInvocation commandInvocation, ServerSampler.TotalStoppedPowerMeasure m) {
+    private void establishBaseline(CommandInvocation commandInvocation, DisplayableMeasure m) {
         baseline = m;
         outputConsumptionSinceStarted(baseline, commandInvocation, true);
         commandInvocation
@@ -79,12 +79,12 @@ public class StartCommand extends QuarkusCommand {
                 (finished) -> outputConsumptionSinceStarted(finished, commandInvocation, false));
     }
 
-    private void outputConsumptionSinceStarted(ServerSampler.TotalStoppedPowerMeasure measure, CommandInvocation out, boolean isBaseline) {
+    private void outputConsumptionSinceStarted(DisplayableMeasure measure, CommandInvocation out, boolean isBaseline) {
         final var title = isBaseline ? "\nBaseline => " : "\nMeasured => ";
         out.println(title + measure);
         if (!isBaseline) {
             out.println("Baseline => " + baseline);
-            out.println("Average ∆: " + ServerSampler.TotalStoppedPowerMeasure.withUnit(measure.getAvg() - baseline.getAvg()));
+            out.println("Average ∆: " + DisplayableMeasure.withUnit(measure.avg() - baseline.avg()));
         }
     }
 }
