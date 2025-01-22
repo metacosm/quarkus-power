@@ -47,7 +47,7 @@ export class QwcPowerInfo extends QwcHotReloadElement {
                         ${this.renderStartOrStop()}
                         ${this.metadata(this._localMetadata, "Local synthetic components (if any)", "No ongoing measure")}
                         ${this.metadata(this._remoteMetadata, "System power metadata", "Couldn't retrieve metadata")}
-                        ${this.displayMeasures()}
+                        ${this.measure(this._measure)}
                     </vaadin-vertical-layout>
                 </vaadin-details>`;
         } else {
@@ -55,16 +55,16 @@ export class QwcPowerInfo extends QwcHotReloadElement {
         }
     }
 
-    displayMeasures() {
-        if (this._measure) {
+    measure(measure) {
+        if (measure) {
             return html`
             <vaadin-details theme="filled">
                 <vaadin-details-summary slot="summary">
-                    Measure ${this._measure.summary} (${this._measure.samplesCount} samples)
+                    Measure ${measure.summary} (${measure.samplesCount} samples)
                 </vaadin-details-summary>
                 <vaadin-vertical-layout theme="spacing-s">
                     <ul>
-                        ${this._measure.measures.map(measure => html`<li>${measure}</li>`)}
+                        ${measure.measures.map(m => html`<li>${m}</li>`)}
                     </ul>
                 </vaadin-vertical-layout>
             </vaadin-details>`
