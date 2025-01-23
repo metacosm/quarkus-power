@@ -7,16 +7,12 @@ import '@vaadin/vertical-layout';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js'
 
-export class QwcPowerMeasure extends QwcHotReloadElement {
+export class QwcPowerMeasures extends QwcHotReloadElement {
 
     jsonRpc = new JsonRpc(this);
 
     static properties = {
-        _remoteMetadata: {state: true},
-        _localMetadata: {state: true},
-        _status: {state: true},
-        _running: {state: true},
-        _measure: {state: true},
+        _measures: {state: true}
     };
 
     constructor() {
@@ -29,33 +25,27 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
     }
 
     hotReload() {
-        this.jsonRpc.remoteMetadata().then(jsonRpcResponse => this._remoteMetadata = jsonRpcResponse.result);
-        this.jsonRpc.localMetadata().then(jsonRpcResponse => this._localMetadata = jsonRpcResponse.result);
-        this.jsonRpc.status().then(jsonRpcResponse => this._status = jsonRpcResponse.result);
-        this.jsonRpc.isRunning().then(response => this._running = response.result);
+        this.jsonRpc.measures().then(jsonRpcResponse => this._measures = jsonRpcResponse.result);
     }
 
     render() {
-        if (this._status) {
+        if (this._measures) {
             return html`
                 <vaadin-details theme="filled" opened>
                     <vaadin-details-summary slot="summary">
-                        Power metadata: ${display.hilite(this._status)}
+                        Recorded Measures
                     </vaadin-details-summary>
                     <vaadin-vertical-layout style="align-items: stretch;" theme="spacing-s padding-s">
-                        ${this.renderStartOrStop()}
-                        ${display.metadata(this._localMetadata, "Local synthetic components (if any)", "No ongoing measure")}
-                        ${display.metadata(this._remoteMetadata, "System power metadata", "Couldn't retrieve metadata")}
-                        ${display.measure(this._measure)}
+                       ${display.measures(this._measures)}
                     </vaadin-vertical-layout>
                 </vaadin-details>`;
         } else {
-            return html`Info unavailable`;
+            return html`No recorded measures`;
         }
     }
 
     measures() {
-        return html``
+        return html`something`
     }
 
     renderStartOrStop() {
@@ -83,4 +73,4 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
     }
 }
 
-customElements.define('qwc-power-measure', QwcPowerMeasure);
+customElements.define('qwc-power-measures', QwcPowerMeasures);

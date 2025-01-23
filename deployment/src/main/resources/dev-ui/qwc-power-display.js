@@ -26,6 +26,12 @@ class QwcPowerDisplay {
         return html`<qui-badge>${name}</qui-badge>`
     }
 
+    measures(measures) {
+        if (measures) {
+            return measures.map(measure => this.measure(measure));
+        }
+    }
+
     measure(measure) {
         if (measure) {
             return html`
