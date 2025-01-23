@@ -26,6 +26,9 @@ public class DevUI {
         card.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:stopwatch")
                 .componentLink("qwc-power-measure.js"));
+        card.addPage(Page.webComponentPageBuilder()
+                .icon("font-awesome-solid:satellite-dish")
+                .componentLink("qwc-power-measures.js"));
         return card;
     }
 
