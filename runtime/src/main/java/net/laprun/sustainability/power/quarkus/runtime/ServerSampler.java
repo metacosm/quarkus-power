@@ -15,6 +15,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.sse.InboundSseEvent;
 import jakarta.ws.rs.sse.SseEventSource;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,8 +59,7 @@ public class ServerSampler {
         this(null);
     }
 
-    public Optional<SensorMetadata> metadata() {
-        synchronized (this) {
+    public synchronized Optional<SensorMetadata> metadata() {
             if (metadata == null) {
                 try {
                     this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
@@ -82,7 +82,6 @@ public class ServerSampler {
                 }
             }
             return Optional.ofNullable(metadata);
-        }
     }
 
     URI powerServerURI() {
@@ -91,7 +90,6 @@ public class ServerSampler {
 
     /**
      * Only returns local synthetic components, if any
-     * @return
      */
     List<SensorMetadata.ComponentMetadata> localMetadata() {
         if (metadata == null) {
@@ -121,9 +119,9 @@ public class ServerSampler {
                 final var metadata = metadata().orElseThrow(IllegalStateException::new);
                 totalComp.reset(); // reset recorded values since we're recording a new measure
                 measure = new OngoingPowerMeasure(metadata, totalComp);
+                status = "started";
             }
             powerAPI.open();
-            status = "started";
             return measure;
         } catch (Exception e) {
             if (e instanceof ProcessingException processingException) {
@@ -164,7 +162,7 @@ public class ServerSampler {
     private void record(SensorMeasure measureFromServer) {
         if (measureFromServer != null) {
             final var components = measureFromServer.components();
-            if (Arrays.equals(new double[] { -1.0 }, components)) {
+            if (Arrays.equals(SensorMeasure.missing.components(), components)) {
                 System.out.println("Skipping invalid measure");
             } else {
                 synchronized (this) {
@@ -178,15 +176,19 @@ public class ServerSampler {
         }
     }
 
-    public synchronized DisplayableMeasure stop() {
+    public DisplayableMeasure stop() {
         powerAPI.close();
-        final var stats = totalComp.statistics();
-        final var measured = new DisplayableMeasure(stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation(), stats.getValues());
-        measure = null;
+        final DescriptiveStatistics stats;
+        final DisplayableMeasure measured;
+        synchronized (this) {
+            stats = totalComp.statistics();
+            measure = null;
+            status = "stopped";
+        }
+        measured = new DisplayableMeasure(stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation(), stats.getValues());
         if (completed != null) {
             completed.accept(measured);
         }
-        status = "stopped";
         return measured;
     }
 
