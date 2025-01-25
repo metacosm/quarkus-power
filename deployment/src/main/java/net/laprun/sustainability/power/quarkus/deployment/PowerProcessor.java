@@ -5,6 +5,8 @@ import io.quarkus.arc.processor.DotNames;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import net.laprun.sustainability.power.quarkus.annotations.PowerMeasure;
+import net.laprun.sustainability.power.quarkus.runtime.PowerMeasuredInterceptor;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 class PowerProcessor {
@@ -21,6 +23,10 @@ class PowerProcessor {
         additionalBeans.produce(AdditionalBeanBuildItem.builder()
                 .addBeanClass(PowerMeasurer.class)
                 .setDefaultScope(DotNames.SINGLETON)
+                .build());
+        additionalBeans.produce(AdditionalBeanBuildItem.builder()
+                .addBeanClass(PowerMeasure.class)
+                .addBeanClass(PowerMeasuredInterceptor.class)
                 .build());
     }
 }
