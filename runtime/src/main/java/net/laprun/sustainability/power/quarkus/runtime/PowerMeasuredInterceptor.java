@@ -1,10 +1,13 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
+import java.util.concurrent.TimeUnit;
+
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.InvocationContext;
+
 import net.laprun.sustainability.power.quarkus.annotations.PowerMeasure;
 
 @PowerMeasure(name = "net.laprun.sustainability.power.interceptor")
@@ -14,24 +17,26 @@ public class PowerMeasuredInterceptor {
     @Inject
     PowerMeasurer measurer;
 
-    @Inject
-    Measures measures;
-
     @AroundInvoke
+    @SuppressWarnings("unused")
     public Object aroundInvoke(InvocationContext ctx) throws Exception {
         final var measureAnn = ctx.getInterceptorBinding(PowerMeasure.class);
-        if(measureAnn == null) {
+        if(measureAnn == null || !measurer.isRunning()) {
             return ctx.proceed();
         }
 
+        final var startTimeMs = System.currentTimeMillis();
         final var startTime = System.nanoTime();
+        final var thread = Thread.currentThread();
+        final var threadName = thread.getName();
+        final var threadId = thread.threadId();
+        final var startCPU = Platform.threadCpuTime(threadId);
         try {
-            measurer.start(0, 100);
             return ctx.proceed();
         } finally {
             final var duration = System.nanoTime() - startTime;
-            final var stop = measurer.stop();
-            stop.ifPresent(measure -> measures.add(measure, duration, measureAnn.name()));
+            final var cpu = Platform.consumedThreadCpuTime(duration, startCPU, Platform.threadCpuTime(threadId));
+            measurer.recordMethodMeasure(measureAnn.name(), threadName, threadId, startTimeMs, TimeUnit.NANOSECONDS.toMillis(duration), cpu);
         }
     }
 }

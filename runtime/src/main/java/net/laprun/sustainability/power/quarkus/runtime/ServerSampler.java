@@ -142,8 +142,8 @@ public class ServerSampler {
         if (!(e instanceof HttpClosedException) && errorHandler != null) {
             errorHandler.accept(e);
         }
-        status = "error: measure failed (" + e.getMessage() + ")";
         synchronized (this) {
+            status = "error: measure failed (" + e.getMessage() + ")";
             if (measure != null && measure.numberOfSamples() > 0) {
                 stop();
             }

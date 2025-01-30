@@ -28,11 +28,37 @@ class QwcPowerDisplay {
 
     measures(measures) {
         if (measures) {
-            return measures.map(measure => this.measure(measure));
+            return html`${measures.map(measure => this.measureList(measure.name, measure.measures))}`
+        } else {
+            return html`No measures`;
+        }
+    }
+
+    measureList(name, measureList) {
+        if (measureList) {
+            return html`
+            <vaadin-details theme="filled">
+                <vaadin-details-summary slot="summary">
+                     ${this.name(name)} measures (called ${measureList.length} times)
+                </vaadin-details-summary>
+                <vaadin-vertical-layout theme="spacing-s">
+                    <ul>
+                        ${measureList.map(m => html`<li>${this.measure(m)}</li>`)}
+                    </ul>
+                </vaadin-vertical-layout>
+            </vaadin-details>`
         }
     }
 
     measure(measure) {
+        if (measure) {
+            return html`
+                Started at: ${measure.date}, ran for ${measure.duration}ms on ${measure.threadName} thread (id: ${measure.threadId}) [thread %: ${measure.threadCpuShare} / jvm %: ${measure.jvmCpuShare}]
+            `
+        }
+    }
+
+    displayMeasure(measure) {
         if (measure) {
             return html`
             <vaadin-details theme="filled">

@@ -46,16 +46,12 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
                         ${this.renderStartOrStop()}
                         ${display.metadata(this._localMetadata, "Local synthetic components (if any)", "No ongoing measure")}
                         ${display.metadata(this._remoteMetadata, "System power metadata", "Couldn't retrieve metadata")}
-                        ${display.measure(this._measure)}
+                        ${display.displayMeasure(this._measure)}
                     </vaadin-vertical-layout>
                 </vaadin-details>`;
         } else {
             return html`Info unavailable`;
         }
-    }
-
-    measures() {
-        return html``
     }
 
     renderStartOrStop() {

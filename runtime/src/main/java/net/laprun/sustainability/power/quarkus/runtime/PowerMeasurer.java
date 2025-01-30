@@ -8,11 +8,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
 import net.laprun.sustainability.power.SensorMetadata;
 
+@ApplicationScoped
 public class PowerMeasurer {
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final ServerSampler sampler;
+    @Inject
+    Measures measures;
 
     public PowerMeasurer() {
         this(new ServerSampler());
@@ -64,5 +70,14 @@ public class PowerMeasurer {
 
     public Optional<DisplayableMeasure> stop() {
         return isRunning() ? Optional.of(sampler.stop()) : Optional.empty();
+    }
+
+    public void recordMethodMeasure(String methodKey, String threadName, long threadId, long startTime, long duration,
+            double threadCPU) {
+        if (!isRunning()) {
+            throw new IllegalStateException("Not running");
+        }
+
+        measures.add(methodKey, threadName, threadId, startTime, duration, threadCPU, Platform.cpuShareOfJVMProcess());
     }
 }

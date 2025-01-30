@@ -1,7 +1,6 @@
 package net.laprun.sustainability.power.quarkus.runtime.devui;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import jakarta.inject.Inject;
@@ -11,6 +10,7 @@ import net.laprun.sustainability.power.quarkus.runtime.DisplayableMeasure;
 import net.laprun.sustainability.power.quarkus.runtime.Measures;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
+@SuppressWarnings("unused")
 public class PowerService {
     public static final Function<SensorMetadata.ComponentMetadata, ComponentMetadata> converter = cm -> new ComponentMetadata(cm.name(), cm.index(), cm.description(), cm.unitAsSymbol());
     @Inject
@@ -35,8 +35,18 @@ public class PowerService {
         return measurer.measureMetadata(converter).local();
     }
 
-    public Map<String, DisplayableMeasure> measures() {
-        return measures.measures();
+    public List<DisplayMeasure> measures() {
+        return measures.measures().entrySet().stream()
+                .map((e) -> new DisplayMeasure(e.getKey(), e.getValue()))
+                .sorted()
+                .toList();
+    }
+
+    public record DisplayMeasure(String name, List<Measures.Measure> measures) implements Comparable<DisplayMeasure> {
+        @Override
+        public int compareTo(DisplayMeasure o) {
+            return name.compareTo(o.name);
+        }
     }
 
     public record ComponentMetadata(String name, int index, String description, String unit) {}
