@@ -1,6 +1,5 @@
 import {html, QwcHotReloadElement} from 'qwc-hot-reload-element';
 import {JsonRpc} from 'jsonrpc';
-import {notifier} from 'notifier';
 import {display} from './qwc-power-display.js';
 import '@vaadin/details';
 import '@vaadin/vertical-layout';
@@ -42,34 +41,6 @@ export class QwcPowerMeasures extends QwcHotReloadElement {
         } else {
             return html`No recorded measures`;
         }
-    }
-
-    measures() {
-        return html`something`
-    }
-
-    renderStartOrStop() {
-        let iconType = this._running ? "stop" : "play";
-        let label = this._running ? "Stop" : "Start";
-        return html`
-            <vaadin-button style="width: 10%;" theme="secondary" @click="${this._startOrStop}">
-                <vaadin-icon icon="font-awesome-solid:${iconType}" slot="prefix"></vaadin-icon>
-                ${label}
-            </vaadin-button>`
-    }
-
-    _startOrStop() {
-        let stop = this._running;
-        this.jsonRpc.startOrStop({start: !stop}).then(jsonRpcResponse => {
-            let msg = "Started";
-            if (stop) {
-                this._measure = jsonRpcResponse.result;
-                msg = "Stopped (" + this._measure.samplesCount + " samples taken)";
-            }
-
-            this.hotReload();
-            notifier.showInfoMessage(msg);
-        });
     }
 }
 

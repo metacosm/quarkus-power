@@ -25,4 +25,13 @@ public class Platform {
         final var cpuLoad = os.getCpuLoad();
         return (processCpuLoad < 0 || cpuLoad <= 0) ? 0 : processCpuLoad / cpuLoad;
     }
+
+    public static double threadCpuTime(long threadId) {
+        // todo: check if available
+        return threads.getThreadCpuTime(threadId);
+    }
+
+    public static double consumedThreadCpuTime(long overDurationNanos, double startThreadTime, double endThreadTime) {
+        return (endThreadTime - startThreadTime) / overDurationNanos;
+    }
 }
