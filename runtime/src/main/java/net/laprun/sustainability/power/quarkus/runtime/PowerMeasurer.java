@@ -1,5 +1,7 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -81,8 +83,8 @@ public class PowerMeasurer {
         return isRunning() ? Optional.of(sampler.stop()) : Optional.empty();
     }
 
-    public void recordMethodMeasure(String methodKey, String threadName, long threadId, long startTime, long duration,
-            double threadCPU) {
+    public void recordMethodMeasure(String methodKey, String threadName, long threadId, long startTime, Duration duration,
+                                    double threadCPU) {
         if (!isRunning()) {
             throw new IllegalStateException("Not running");
         }
