@@ -1,8 +1,5 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import java.util.Arrays;
-import java.util.stream.DoubleStream;
-
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import net.laprun.sustainability.power.SensorMetadata;
@@ -18,8 +15,8 @@ public class TotalRecorder extends TotalSyntheticComponent implements Recorder {
     }
 
     @Override
-    public DoubleStream measures() {
-        return Arrays.stream(statistics.getValues());
+    public double[] liveMeasures() {
+        return statistics.getValues();
     }
 
     @Override
