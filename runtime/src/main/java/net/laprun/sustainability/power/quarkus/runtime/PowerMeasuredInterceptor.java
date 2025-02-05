@@ -1,6 +1,6 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
@@ -36,7 +36,7 @@ public class PowerMeasuredInterceptor {
         } finally {
             final var duration = System.nanoTime() - startTime;
             final var cpu = Platform.consumedThreadCpuTime(duration, startCPU, Platform.threadCpuTime(threadId));
-            measurer.recordMethodMeasure(measureAnn.name(), threadName, threadId, startTimeMs, TimeUnit.NANOSECONDS.toMillis(duration), cpu);
+            measurer.recordMethodMeasure(measureAnn.name(), threadName, threadId, startTimeMs, Duration.ofNanos(duration), cpu);
         }
     }
 }
