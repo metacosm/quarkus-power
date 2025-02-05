@@ -35,10 +35,19 @@ public class PowerMeasurer {
 
     public <T> Metadata<T> measureMetadata(Function<SensorMetadata.ComponentMetadata, T> converter) {
         final var metadata = sampler.metadata();
+        final var local = sampler.localMetadata();
+        final var remote = metadata.map(sm -> {
+                    var list = sm.components().values().stream().toList();
+                    if (!local.isEmpty()) {
+                        list = new ArrayList<>(list);
+                        list.addAll(local);
+                    }
+                    return list;
+                })
+                .orElse(List.of());
         return new Metadata<>(sampler.powerServerURI(),
                 metadata.map(SensorMetadata::documentation).orElse(null),
-                metadata.map(sm -> sm.components().values().stream().toList()).orElse(List.of()),
-                sampler.localMetadata(), sampler.status(), converter);
+                remote, sampler.status(), converter);
     }
 
     public PowerMeasurer withCompletedHandler(Consumer<DisplayableMeasure> completed) {
