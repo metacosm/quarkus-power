@@ -12,8 +12,7 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
     jsonRpc = new JsonRpc(this);
 
     static properties = {
-        _remoteMetadata: {state: true},
-        _localMetadata: {state: true},
+        _metadata: {state: true},
         _status: {state: true},
         _running: {state: true},
         _measure: {state: true},
@@ -29,8 +28,7 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
     }
 
     hotReload() {
-        this.jsonRpc.remoteMetadata().then(jsonRpcResponse => this._remoteMetadata = jsonRpcResponse.result);
-        this.jsonRpc.localMetadata().then(jsonRpcResponse => this._localMetadata = jsonRpcResponse.result);
+        this.jsonRpc.metadata().then(jsonRpcResponse => this._metadata = jsonRpcResponse.result);
         this.jsonRpc.status().then(jsonRpcResponse => this._status = jsonRpcResponse.result);
         this.jsonRpc.isRunning().then(response => this._running = response.result);
     }
@@ -44,8 +42,7 @@ export class QwcPowerMeasure extends QwcHotReloadElement {
                     </vaadin-details-summary>
                     <vaadin-vertical-layout style="align-items: stretch;" theme="spacing-s padding-s">
                         ${this.renderStartOrStop()}
-                        ${display.metadata(this._localMetadata, "Local synthetic components (if any)", "No ongoing measure")}
-                        ${display.metadata(this._remoteMetadata, "System power metadata", "Couldn't retrieve metadata")}
+                        ${display.metadata(this._metadata, "System power metadata", "Couldn't retrieve metadata")}
                         ${display.displayMeasure(this._measure)}
                     </vaadin-vertical-layout>
                 </vaadin-details>`;

@@ -27,12 +27,8 @@ public class PowerService {
         return measurer.sampler().status();
     }
 
-    public List<ComponentMetadata> remoteMetadata() {
-        return measurer.measureMetadata(converter).remote();
-    }
-
-    public List<ComponentMetadata> localMetadata() {
-        return measurer.measureMetadata(converter).local();
+    public List<ComponentMetadata> metadata() {
+        return measurer.measureMetadata(converter).components();
     }
 
     public List<DisplayMeasure> measures() {

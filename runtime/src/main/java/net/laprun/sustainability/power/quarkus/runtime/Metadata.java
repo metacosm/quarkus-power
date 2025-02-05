@@ -10,16 +10,14 @@ import net.laprun.sustainability.power.SensorMetadata;
 public class Metadata<T> {
     private final URI powerServerURI;
     private final String status;
-    private final List<T> local;
     private final List<T> remote;
     private final Function<SensorMetadata.ComponentMetadata, T> converter;
     private final String documentation;
 
-    public Metadata(URI powerServerURI, String documentation, List<SensorMetadata.ComponentMetadata> remote, List<SensorMetadata.ComponentMetadata> local, String status, Function<SensorMetadata.ComponentMetadata, T> converter) {
+    public Metadata(URI powerServerURI, String documentation, List<SensorMetadata.ComponentMetadata> remote, String status, Function<SensorMetadata.ComponentMetadata, T> converter) {
         this.powerServerURI = powerServerURI;
         this.converter = converter;
         this.remote = converted(remote);
-        this.local = converted(local);
         this.status = status;
         this.documentation = documentation;
     }
@@ -34,16 +32,11 @@ public class Metadata<T> {
     @Override
     public String toString() {
         return "Connected to " + powerServerURI + " (status: " + status
-                + ")\n====\nLocal metadata (including synthetic components, if any):\n"
-                + (local.isEmpty() ? "No ongoing measure" : local)
-                + "\n====\nSensor metadata:\n" + remote;
+                + ")\n====\nMetadata (including synthetic components, if any):\n"
+                + remote;
     }
 
-    public List<T> local() {
-        return local;
-    }
-
-    public List<T> remote() {
+    public List<T> components() {
         return remote;
     }
 }
