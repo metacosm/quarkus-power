@@ -22,6 +22,24 @@ class QwcPowerDisplay {
         }
     }
 
+    hilitePower(power) {
+        if (power) {
+            let level;
+            if (power < 0.5) {
+                level = 'contrast';
+            } else if (power < 1) {
+                level = 'default';
+            } else if (power < 5) {
+               level = 'success';
+            } else if (power < 10) {
+                level = 'warning';
+            } else {
+                level = 'error';
+            }
+            return html`<qui-badge level="${level}" primary>${power}</qui-badge>`;
+        }
+    }
+
     name(name) {
         return html`<qui-badge>${name}</qui-badge>`
     }
@@ -42,9 +60,9 @@ class QwcPowerDisplay {
                      ${this.name(name)} measures (called ${measureList.length} times)
                 </vaadin-details-summary>
                 <vaadin-vertical-layout theme="spacing-s">
-                    <ul>
+                    <ol>
                         ${measureList.map(m => html`<li>${this.measure(m)}</li>`)}
-                    </ul>
+                    </ol>
                 </vaadin-vertical-layout>
             </vaadin-details>`
         }
@@ -52,9 +70,7 @@ class QwcPowerDisplay {
 
     measure(measure) {
         if (measure) {
-            return html`
-                Started at: ${measure.date}, ran for ${measure.duration}ms on ${measure.threadName} thread (id: ${measure.threadId}) [thread %: ${measure.threadCpuShare} / jvm %: ${measure.jvmCpuShare}]
-            `
+            return html`${this.hilitePower(measure.power)}mW (${measure.durationMs}ms)`;
         }
     }
 
@@ -67,7 +83,7 @@ class QwcPowerDisplay {
                 </vaadin-details-summary>
                 <vaadin-vertical-layout theme="spacing-s">
                     <ul>
-                        ${measure.measures.map(m => html`<li>${m}</li>`)}
+                        ${measure.measures.map(m => html`<li>${this.hilitePower(m)}mW</li>`)}
                     </ul>
                 </vaadin-vertical-layout>
             </vaadin-details>`

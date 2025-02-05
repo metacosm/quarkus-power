@@ -19,6 +19,8 @@ public class PowerService {
     @Inject
     Measures measures;
 
+    private DisplayableMeasure measure;
+
     public boolean isRunning() {
         return measurer.isRunning();
     }
@@ -33,16 +35,24 @@ public class PowerService {
 
     public List<DisplayMeasure> measures() {
         return measures.measures().entrySet().stream()
-                .map((e) -> new DisplayMeasure(e.getKey(), e.getValue()))
+                .map(e -> new DisplayMeasure(e.getKey(), e.getValue().stream().map(this::from).toList()))
                 .sorted()
                 .toList();
     }
 
-    public record DisplayMeasure(String name, List<Measures.Measure> measures) implements Comparable<DisplayMeasure> {
+    public record DisplayMeasure(String name, List<MethodMeasure> measures) implements Comparable<DisplayMeasure> {
         @Override
         public int compareTo(DisplayMeasure o) {
             return name.compareTo(o.name);
         }
+    }
+
+    public record MethodMeasure(long durationMs, double power)  {
+    }
+
+    public MethodMeasure from(Measures.Measure measure) {
+        final var cursor = measurer.sampler().cursorOver(measure.startTime(), measure.duration());
+        return new MethodMeasure(measure.duration().toMillis(), cursor.sum());
     }
 
     public record ComponentMetadata(String name, int index, String description, String unit) {}
@@ -52,7 +62,8 @@ public class PowerService {
             measurer.start(0, 500);
             return null;
         } else {
-            return measurer.stop().orElse(null);
+            measure = measurer.stop().orElse(null);
+            return measure;
         }
     }
 }
