@@ -58,9 +58,6 @@ public class PowerMeasurer {
     }
 
     public PowerMeasurer withErrorHandler(Consumer<Throwable> errorHandler) {
-        errorHandler = errorHandler != null ? errorHandler : (exception) -> {
-            throw new RuntimeException(exception);
-        };
         sampler.withErrorHandler(errorHandler);
         return this;
     }
