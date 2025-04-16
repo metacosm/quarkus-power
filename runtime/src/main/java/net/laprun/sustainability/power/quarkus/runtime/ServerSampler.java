@@ -28,11 +28,12 @@ import net.laprun.sustainability.power.measure.MeasureBackedCursor;
 
 public class ServerSampler {
     private static final long pid = ProcessHandle.current().pid();
+    public static final String CONNECT_EXCEPTION_MSG = "Couldn't connect to power-server. Please see the instructions to set it up and run it.";
     private final SseEventSource powerAPI;
     private final WebTarget base;
     private final Measure measure;
+    private final Consumer<Throwable> defaultErrorHandler;
     private SensorMetadata metadata;
-    private TotalRecorder totalComp;
     private Consumer<DisplayableMeasure> completed;
     private Consumer<Throwable> errorHandler;
     private String status = "initialized";
@@ -53,6 +54,14 @@ public class ServerSampler {
         powerAPI.register(this::onEvent, this::stopOnError, this::onComplete);
 
         this.measure = new Measure();
+        defaultErrorHandler = e -> {
+            synchronized (this) {
+                status = "error: measure failed (" + e.getMessage() + ")";
+                if (measure.isRunning()) {
+                    stop();
+                }
+            }
+        };
     }
 
     public ServerSampler() {
@@ -102,19 +111,23 @@ public class ServerSampler {
             }
             powerAPI.open();
         } catch (Exception e) {
-            if (e instanceof ProcessingException processingException) {
-                final var cause = processingException.getCause();
-                if (cause instanceof ConnectException connectException) {
-                    stopOnError(new RuntimeException(
-                            "Couldn't connect to power-server. Please see the instructions to set it up and run it.",
-                            connectException));
-                }
-            }
-            stopOnError(e);
+            stopOnError(launderConnectionError(e));
         }
     }
 
-    public void stopOnError(Throwable e) {
+    private RuntimeException launderConnectionError(Throwable e) {
+        if (e instanceof ProcessingException processingException) {
+            final var cause = processingException.getCause();
+            if (cause instanceof ConnectException connectException) {
+                return new RuntimeException(CONNECT_EXCEPTION_MSG, connectException);
+            }
+        } else if (e instanceof IllegalStateException) {
+            return new RuntimeException(CONNECT_EXCEPTION_MSG);
+        }
+        return new RuntimeException(CONNECT_EXCEPTION_MSG, e);
+    }
+
+    private void stopOnError(Throwable e) {
         // ignore HttpClosedException todo: figure out why this exception occurs in the first place!
         if (!(e instanceof HttpClosedException) && errorHandler != null) {
             errorHandler.accept(e);
@@ -146,7 +159,7 @@ public class ServerSampler {
                     if (measure.isRunning()) {
                         measure.recordMeasure(components);
                     } else {
-                        System.out.println("No ongoing measure! Skipping for tick " + measureFromServer.tick());
+                        System.out.println("No ongoing measure! Skipping for timestamp " + measureFromServer.timestamp());
                     }
                 }
             }
@@ -173,6 +186,7 @@ public class ServerSampler {
 
 
     public ServerSampler withErrorHandler(Consumer<Throwable> errorHandler) {
+        errorHandler = errorHandler != null ? errorHandler : defaultErrorHandler;
         this.errorHandler = errorHandler;
         return this;
     }
