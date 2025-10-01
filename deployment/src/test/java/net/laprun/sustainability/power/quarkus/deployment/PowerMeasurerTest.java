@@ -19,7 +19,7 @@ public class PowerMeasurerTest {
 
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
-            .withApplicationRoot((jar) -> jar.addClasses(PowerResource.class, TestPowerMeasurer.class, TestPowerSensor.class));
+            .withApplicationRoot((jar) -> jar.addClasses(PowerResource.class, TestPowerMeasurer.class, TestPowerSensor.class, TestPersistence.class));
 
     @Test
     void startShouldAccumulateOverSpecifiedDurationAndStop() {

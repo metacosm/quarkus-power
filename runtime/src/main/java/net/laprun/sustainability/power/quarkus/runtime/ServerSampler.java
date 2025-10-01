@@ -159,7 +159,7 @@ public class ServerSampler {
                     if (measure.isRunning()) {
                         measure.recordMeasure(components);
                     } else {
-                        System.out.println("No ongoing measure! Skipping for timestamp " + measureFromServer.timestamp());
+                        System.out.println("No ongoing measure! Skipping for timestamp " + measureFromServer.startMs());
                     }
                 }
             }
