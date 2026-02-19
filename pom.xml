@@ -47,7 +47,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <quarkus.version>3.32.0</quarkus.version>
-    <power-server.version>0.2.3</power-server.version>
+    <power-server.version>0.6.1</power-server.version>
 
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
