@@ -7,7 +7,7 @@ import java.net.URI;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import io.quarkus.test.QuarkusUnitTest;
+import io.quarkus.test.QuarkusExtensionTest;
 import io.quarkus.test.common.http.TestHTTPResource;
 import net.laprun.sustainability.power.PowerResource;
 import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
@@ -18,7 +18,7 @@ public class PowerMeasurerTest {
     URI uri;
 
     @RegisterExtension
-    static final QuarkusUnitTest config = new QuarkusUnitTest()
+    static final QuarkusExtensionTest config = new QuarkusExtensionTest()
             .withApplicationRoot((jar) -> jar.addClasses(PowerResource.class, TestPowerMeasurer.class, TestPowerSensor.class));
 
     @Test
