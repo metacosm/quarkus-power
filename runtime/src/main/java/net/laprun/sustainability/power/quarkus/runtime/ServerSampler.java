@@ -69,16 +69,16 @@ public class ServerSampler {
     }
 
     public synchronized Optional<SensorMetadata> metadata() {
-            if (metadata == null) {
-                try {
-                    this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
-                    status = "connected";
-                } catch (Exception e) {
-                    Log.warn("Failed to load sensor metadata", e);
-                    status = "error: failed to load sensor metadata (" + e.getMessage() + ")";
-                }
+        if (metadata == null) {
+            try {
+                this.metadata = base.path("metadata").request(MediaType.APPLICATION_JSON_TYPE).get(SensorMetadata.class);
+                status = "connected";
+            } catch (Exception e) {
+                Log.warn("Failed to load sensor metadata", e);
+                status = "error: failed to load sensor metadata (" + e.getMessage() + ")";
             }
-            return Optional.ofNullable(metadata);
+        }
+        return Optional.ofNullable(metadata);
     }
 
     URI powerServerURI() {
@@ -103,7 +103,7 @@ public class ServerSampler {
     public void start(long durationInSeconds, long frequencyInMilliseconds) {
         try {
             synchronized (this) {
-                if(metadata == null) {
+                if (metadata == null) {
                     metadata = metadata().orElseThrow(IllegalStateException::new);
                 }
                 measure.startWith(metadata);
@@ -183,7 +183,6 @@ public class ServerSampler {
         this.completed = completed;
         return this;
     }
-
 
     public ServerSampler withErrorHandler(Consumer<Throwable> errorHandler) {
         errorHandler = errorHandler != null ? errorHandler : defaultErrorHandler;

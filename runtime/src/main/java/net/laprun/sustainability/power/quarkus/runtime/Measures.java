@@ -13,7 +13,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class Measures {
     private final Map<String, List<Measure>> measures = new HashMap<>();
 
-    public Measure add(String measureName, String threadName, long threadId, long startTime, Duration duration, double threadCpu, double jvmCpu) {
+    public Measure add(String measureName, String threadName, long threadId, long startTime, Duration duration,
+            double threadCpu, double jvmCpu) {
         final Measure measure = new Measure(threadName, threadId, startTime, duration, threadCpu, jvmCpu);
         measures.computeIfAbsent(measureName, (unused) -> new LinkedList<>()).add(measure);
         return measure;
@@ -23,7 +24,8 @@ public class Measures {
         return measures;
     }
 
-    public record Measure(String threadName, long threadId, long startTime, Duration duration, double threadCpuShare, double jvmCpuShare) {
+    public record Measure(String threadName, long threadId, long startTime, Duration duration, double threadCpuShare,
+            double jvmCpuShare) {
         @SuppressWarnings("unused")
         public String getDate() {
             return new Date(startTime).toString();

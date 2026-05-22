@@ -44,7 +44,7 @@ class Measure {
             totalComp.reset();
         }
 
-        if(measure == null) {
+        if (measure == null) {
             // fixme: remove hardcoded sample period
             measure = new OngoingPowerMeasure(metadata, 500, totalComp);
         } else {
@@ -63,7 +63,8 @@ class Measure {
         running = false;
         final var stats = totalComp.statistics();
         final var timing = measure.timingInfo();
-        measured = new DisplayableMeasure(stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(), stats.getStandardDeviation(), stats.getValues(), timing);
+        measured = new DisplayableMeasure(stats.getSum(), stats.getMin(), stats.getMax(), stats.getMean(),
+                stats.getStandardDeviation(), stats.getValues(), timing);
         return measured;
     }
 

@@ -14,7 +14,8 @@ public class Metadata<T> {
     private final Function<SensorMetadata.ComponentMetadata, T> converter;
     private final String documentation;
 
-    public Metadata(URI powerServerURI, String documentation, List<SensorMetadata.ComponentMetadata> remote, String status, Function<SensorMetadata.ComponentMetadata, T> converter) {
+    public Metadata(URI powerServerURI, String documentation, List<SensorMetadata.ComponentMetadata> remote, String status,
+            Function<SensorMetadata.ComponentMetadata, T> converter) {
         this.powerServerURI = powerServerURI;
         this.converter = converter;
         this.remote = converted(remote);

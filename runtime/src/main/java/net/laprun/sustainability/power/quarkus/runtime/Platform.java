@@ -1,9 +1,9 @@
 package net.laprun.sustainability.power.quarkus.runtime;
 
-import com.sun.management.OperatingSystemMXBean;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+
+import com.sun.management.OperatingSystemMXBean;
 
 public class Platform {
     private static final OperatingSystemMXBean os;

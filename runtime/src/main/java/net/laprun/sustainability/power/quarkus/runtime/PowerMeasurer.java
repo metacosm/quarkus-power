@@ -39,13 +39,13 @@ public class PowerMeasurer {
         final var metadata = sampler.metadata();
         final var local = sampler.localMetadata();
         final var remote = metadata.map(sm -> {
-                    var list = sm.components().values().stream().toList();
-                    if (!local.isEmpty()) {
-                        list = new ArrayList<>(list);
-                        list.addAll(local);
-                    }
-                    return list;
-                })
+            var list = sm.components().values().stream().toList();
+            if (!local.isEmpty()) {
+                list = new ArrayList<>(list);
+                list.addAll(local);
+            }
+            return list;
+        })
                 .orElse(List.of());
         return new Metadata<>(sampler.powerServerURI(),
                 metadata.map(SensorMetadata::documentation).orElse(null),
@@ -81,7 +81,7 @@ public class PowerMeasurer {
     }
 
     public void recordMethodMeasure(String methodKey, String threadName, long threadId, long startTime, Duration duration,
-                                    double threadCPU) {
+            double threadCPU) {
         if (!isRunning()) {
             throw new IllegalStateException("Not running");
         }

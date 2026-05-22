@@ -12,7 +12,8 @@ import net.laprun.sustainability.power.quarkus.runtime.PowerMeasurer;
 
 @SuppressWarnings("unused")
 public class PowerService {
-    public static final Function<SensorMetadata.ComponentMetadata, ComponentMetadata> converter = cm -> new ComponentMetadata(cm.name(), cm.index(), cm.description(), cm.unitAsSymbol());
+    public static final Function<SensorMetadata.ComponentMetadata, ComponentMetadata> converter = cm -> new ComponentMetadata(
+            cm.name(), cm.index(), cm.description(), cm.unitAsSymbol());
     @Inject
     PowerMeasurer measurer;
 
@@ -47,7 +48,7 @@ public class PowerService {
         }
     }
 
-    public record MethodMeasure(long durationMs, double power)  {
+    public record MethodMeasure(long durationMs, double power) {
     }
 
     public MethodMeasure from(Measures.Measure measure) {
@@ -55,10 +56,11 @@ public class PowerService {
         return new MethodMeasure(measure.duration().toMillis(), cursor.sum());
     }
 
-    public record ComponentMetadata(String name, int index, String description, String unit) {}
+    public record ComponentMetadata(String name, int index, String description, String unit) {
+    }
 
     public DisplayableMeasure startOrStop(boolean start) {
-        if(start) {
+        if (start) {
             measurer.start(0, 500);
             return null;
         } else {

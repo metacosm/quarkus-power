@@ -21,7 +21,7 @@ public class PowerMeasuredInterceptor {
     @SuppressWarnings("unused")
     public Object aroundInvoke(InvocationContext ctx) throws Exception {
         final var measureAnn = ctx.getInterceptorBinding(PowerMeasure.class);
-        if(measureAnn == null || !measurer.isRunning()) {
+        if (measureAnn == null || !measurer.isRunning()) {
             return ctx.proceed();
         }
 
