@@ -39,9 +39,4 @@ To use the extension:
    ``` 
 2. Start your application in dev mode: `quarkus dev`
 3. Enter the dev mode terminal by pressing `:` (column)
-4. You should have a new `power` command available, type `power -h` for more information
-5. You can start power measurement with `power start` and stop it with `power stop`, at which time the power consumption
-   of your app will be displayed.
-6. You can also ask for power to be measured for a given duration by using the `-s` option when
-   calling `power start`. In this case, there's no need to call `power stop`, the energy consumed during the specified
-   time will be automatically displayed once the time period is elapsed.
+4. You can either interact with the extension via the terminal using the `power` command, type `power -h` for more information or via the Dev UI, by pressing `d` to open the UI in a browser window and then clicking on the `Measure` link of the `Power` card. Either way, you can start and stop power measurement and (hopefully) see the results. If you have methods annotated with the extension-provided `@PowerMeasure` annotation, the power for each invocation should show up in the `Measures` part of the `Power` UI (note that there is currently an issue with the results display).
