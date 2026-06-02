@@ -11,20 +11,18 @@ requirements.
 ### power-server
 
 This extension relies on retrieving power consumption measurements from an application
-called [power-server](https://github.com/metacosm/power-server). This application needs to be run using `sudo` to get
-access to the underlying OS' power reporting layer. Please download the appropriate version for your OS from
-the [release page](https://github.com/metacosm/power-server/releases/). Once downloaded, you can unpack
-the archive and navigate to the `bin` directory to find the `power-server` binary that you can then run
-using: `sudo power-server`.
+called [power-server](https://github.com/metacosm/power-server). As the extension was being developed, it became obvious that more work was required on the measuring backend. As a result, the work on the extension got paused while issues where addressed on `power-server`. This means that this extension is still very rough and is expected to have bugs. This also means that it currently requires an older version of `power-server`, which you can find here: https://github.com/metacosm/power-server/releases/tag/0.2.2.2. Please download the appropriate version for your OS.
+
+Once downloaded, you can unpack the archive and navigate to the `bin` directory to find the `power-server` binary that you can then run
+using: `sudo power-server`. `sudo` to get access to the underlying OS' power reporting layer
 
 Note:
 On macOS, you will most likely get a dialog telling you that the application cannot be opened because Apple cannot
-verify it. We're looking into addressing this problem but, in the mean time, you can open System Settings then navigate
-to the Privacy & Security section. Once there, if you scroll down to the Security sub-section, if you happen to perform
-these actions not too long after seeing the error dialog, there should be a spot where you can allow the application to
-run anyway. If you click on Allow, the next time you run `power-server`, you should get yet another message, which
-should now let you open the application. Once this is done, you shouldn't need to perform these steps again (until the
-next time you download an update, that is).
+verify it. You can follow the steps as described [here](https://www.macobserver.com/tips/how-to/fixing-macos-cannot-verify-app-free-malware/) to work around this issue, or you can issue the following command, in the `bin` directory:
+
+```shell
+sudo xattr -rd com.apple.quarantine ./power-server
+```
 
 ## Usage
 
